@@ -48,6 +48,7 @@ class ReturnPicking(models.TransientModel):
             if warehouse.out_type_id.return_picking_type_id.default_location_dest_id.return_location:
                 location_id = warehouse.out_type_id.return_picking_type_id.default_location_dest_id.id
             self.location_id = location_id
+            self.company_id = order.company_id.id
 
     def create_returns_ept(self):
         """

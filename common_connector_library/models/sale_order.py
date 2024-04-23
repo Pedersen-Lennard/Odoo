@@ -260,9 +260,9 @@ class SaleOrder(models.Model):
             vals = self.prepare_val_for_stock_move_ept(product, product_qty, product_uom, vendor_location,
                                                        customers_location, order_line, bom_line)
             stock_move = self.env['stock.move'].create(vals)
-            stock_move._action_assign()
-            stock_move._set_quantity_done(product_qty)
-            stock_move._action_done()
+            stock_move.sudo()._action_assign()
+            stock_move.sudo()._set_quantity_done(product_qty)
+            stock_move.with_context(is_connector=True)._action_done()
         return True
 
     def prepare_val_for_stock_move_ept(self, product, product_qty, product_uom, vendor_location, customers_location,
@@ -293,4 +293,19 @@ class SaleOrder(models.Model):
         }
         if bom_line:
             vals.update({'bom_line_id': bom_line[0].id})
+        return vals
+
+    def prepare_order_note_with_customer_note(self, vals):
+        """
+        This method use for concate customer note and odoo default set note.
+        :param vals:
+        :return: vals
+        @author: Nilam Kubavat on Date 30-June-2023 for Task_id:233026
+        """
+        note_value = vals.get('note', '') if vals.get('note', False) else ''  # Get the current note value, default to an empty string if it's None
+        invoice_terms = self.env.company.invoice_terms or ''  # Get invoice terms, default to an empty string if it's None
+        if note_value and invoice_terms:  # Only add a space if both values are non-empty
+            vals['note'] = f'{note_value} {invoice_terms}'.strip()
+        else:
+            vals['note'] = (note_value + invoice_terms).strip()  # Handle either note_value or invoice_terms being empty
         return vals

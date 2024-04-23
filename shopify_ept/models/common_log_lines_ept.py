@@ -2,13 +2,21 @@
 # See LICENSE file for full copyright and licensing details.
 from datetime import datetime, timedelta
 import logging
-from odoo import models, fields
+from odoo import models, fields, api
 
 _logger = logging.getLogger(__name__)
 
 
 class CommonLogLineEpt(models.Model):
     _inherit = "common.log.lines.ept"
+
+    @api.model
+    def update_module(self):
+        shopify_instances = self.env['shopify.instance.ept'].search([])
+        log_lines = self.env['common.log.lines.ept'].search([('shopify_instance_id', 'in', shopify_instances.ids)])
+        for log_line in log_lines:
+            if not log_line.module:
+                log_line.write({'module': 'shopify_ept'})
 
     shopify_product_data_queue_line_id = fields.Many2one("shopify.product.data.queue.line.ept",
                                                          "Shopify Product Queue Line")
@@ -33,10 +41,11 @@ class CommonLogLineEpt(models.Model):
             date_deadline = datetime.strftime(
                 datetime.now() + timedelta(days=int(payout.instance_id.shopify_date_deadline)), "%Y-%m-%d")
             model_id = self.get_model_id("shopify.payout.report.ept")
-            group_accountant = self.env.ref('account.group_account_user')
+            # group_accountant = self.env.ref('account.group_account_user')
+            user_ids = payout.instance_id.shopify_payout_user_ids
 
             if note:
-                for user_id in group_accountant.users:
+                for user_id in user_ids:
                     mail_activity = mail_activity_obj.search(
                         [('res_model_id', '=', model_id), ('user_id', '=', user_id.id), ('note', '=', note),
                          ('activity_type_id', '=', activity_type_id)])
@@ -113,7 +122,8 @@ class CommonLogLineEpt(models.Model):
         return super(CommonLogLineEpt, self).create_common_log_line_ept(**kwargs)
 
     def search_existing_record(self, **kwargs):
-        model = self._get_model_id(kwargs.get('model_name')).id
+        # model = self._get_model_id(kwargs.get('model_name')).id
+        model = self.env['ir.model'].sudo().search([('model', '=', kwargs.get('model_name'))]).id
         record_id = self.search([('shopify_instance_id', '=', kwargs.get('shopify_instance_id')),
                                  ('model_id', '=', model),
                                  ('message', '=', kwargs.get('message')),

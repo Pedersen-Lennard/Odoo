@@ -28,7 +28,8 @@ class ShopifyResPartnerEpt(models.Model):
 
         if not first_name and not last_name and not email:
             message = "First name, Last name and Email are not found in customer data."
-            common_log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id, message=message,
+            common_log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id, module="shopify_ept",
+                                                           message=message,
                                                            model_name='res.partner',
                                                            shopify_customer_data_queue_line_id=queue_line.id
                                                            if queue_line else False)
@@ -199,12 +200,18 @@ class ShopifyResPartnerEpt(models.Model):
         #                               ('email', '=', vals.get('email')),
         #                               ('is_company', '=', True)])
         company = partner_obj.search([('name', '=', vals.get('company')), ('is_company', '=', True)])
+        partner_id = False
+        if partner and partner.parent_id:
+            partner_id = partner.parent_id.id
+        elif partner and not partner.parent_id:
+            partner_id = partner.id
         if not company:
             partner_vals = {
                 "name": vals.get('company'),
                 "is_company": True,
                 "customer_rank": 1,
-                'parent_id': partner.parent_id.id if partner and partner.parent_id else partner
+                # 'parent_id': partner.parent_id if partner and partner.parent_id else partner
+                'parent_id': partner_id
             }
             company = partner_obj.create(partner_vals)
         return company

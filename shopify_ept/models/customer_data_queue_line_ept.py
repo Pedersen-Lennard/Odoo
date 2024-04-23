@@ -68,7 +68,7 @@ class ShopifyCustomerDataQueueLineEpt(models.Model):
         }
         if not existing_customer_data:
             return synced_shopify_customers_line_obj.create(line_vals)
-        return existing_customer_data.write({'shopify_synced_customer_data': data})
+        return existing_customer_data.write({'shopify_synced_customer_data': data, 'state': 'draft'})
 
     @api.model
     def sync_shopify_customer_into_odoo(self):

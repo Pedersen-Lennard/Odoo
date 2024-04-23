@@ -17,7 +17,8 @@
                 </button>
             </xpath>
             <button name="action_cancel" position="before">
-                <button type="action" name="%(stock.act_stock_return_picking)d" context="{'default_sale_order_id':id}"
+                <button type="action" name="%(stock.act_stock_return_picking)d"
+                        context="{'default_sale_order_ept_id':id}"
                         string="Return" attrs="{'invisible': [('moves_count', '=', 0)]}" groups="base.group_user">
                 </button>
             </button>

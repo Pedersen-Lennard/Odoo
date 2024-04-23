@@ -44,7 +44,8 @@ class SaleAutoWorkflowConfiguration(models.Model):
         @param financial_status: Status as paid or not paid.
         """
         payment_methods = self.env['shopify.payment.gateway.ept'].search([('shopify_instance_id', '=', instance.id)])
-        auto_workflow_record = self.env.ref("common_connector_library.automatic_validation_ept")
+        auto_workflow_record = self.env.ref("common_connector_library.automatic_validation_ept",
+                                            raise_if_not_found=False)
 
         for payment_method in payment_methods:
             domain = [('shopify_instance_id', '=', instance.id),
@@ -57,7 +58,7 @@ class SaleAutoWorkflowConfiguration(models.Model):
 
             vals = {
                 'shopify_instance_id': instance.id,
-                'auto_workflow_id': auto_workflow_record.id,
+                'auto_workflow_id': auto_workflow_record.id if auto_workflow_record else False,
                 'payment_gateway_id': payment_method.id,
                 'financial_status': financial_status
             }

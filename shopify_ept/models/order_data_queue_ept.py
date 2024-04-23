@@ -135,6 +135,22 @@ class ShopifyOrderDataQueueEpt(models.Model):
                                               order_type="shipped")
         return True
 
+    def import_buy_with_prime_order_cron_action(self, ctx=False):
+        """This method is used to import orders from the auto-import cron job.
+        """
+        if not isinstance(ctx, dict):
+            return True
+        instance_id = ctx.get('shopify_instance_id')
+        instance = self.env['shopify.instance.ept'].browse(instance_id)
+        from_date = instance.last_buy_with_prime_order_import_date
+        to_date = datetime.now()
+        if not from_date:
+            from_date = to_date - timedelta(3)
+
+        self.shopify_create_order_data_queues(instance, from_date, to_date, created_by="scheduled_action",
+                                              order_type="buy_with_prime")
+        return True
+
     def convert_dates_by_timezone(self, instance, from_date, to_date):
         """
         This method converts the dates by timezone of the Shopify store to import orders.
@@ -168,7 +184,7 @@ class ShopifyOrderDataQueueEpt(models.Model):
         start = time.time()
         order_queues = []
         instance.connect_in_shopify()
-        if order_type != "shipped":
+        if order_type not in ["shipped", "buy_with_prime"]:
             queue_type = 'unshipped'
             for order_status_id in instance.shopify_order_status_ids:
                 order_status = order_status_id.status
@@ -183,10 +199,17 @@ class ShopifyOrderDataQueueEpt(models.Model):
                         order_queue_list = self.list_all_orders(order_ids, instance, created_by, queue_type)
                         order_queues += order_queue_list
                 instance.last_date_order_import = to_date - timedelta(days=2)
-        else:
+        elif order_type == "shipped":
             order_queues = self.shopify_shipped_order_request(instance, from_date, to_date, created_by="import",
                                                               order_type="shipped")
-            instance.last_shipped_order_import_date = to_date - timedelta(days=2)
+            instance.last_shipped_order_import_date = to_date - timedelta(hours=1)
+        else:
+            if order_type == "buy_with_prime" and instance.import_buy_with_prime_shopify_order:
+                order_queues = self.shopify_shipped_order_request(instance, from_date, to_date, created_by="import",
+                                                                  order_type="buy_with_prime")
+                instance.last_buy_with_prime_order_import_date = to_date - timedelta(days=2)
+            else:
+                _logger.info("Import Buy with Prime Configuration is not Active.")
         end = time.time()
         _logger.info("Imported Orders in %s seconds.", str(end - start))
         return order_queues
@@ -218,7 +241,9 @@ class ShopifyOrderDataQueueEpt(models.Model):
         order_data_queue_line_obj = self.env["shopify.order.data.queue.line.ept"]
         order_queues = []
         queue_type = 'shipped'
-        order_ids = self.shopify_order_request(instance, from_date, to_date, order_type)
+        order_ids = self.shopify_order_request(instance, from_date, to_date, queue_type)
+        if order_ids and order_type == "buy_with_prime":
+            order_ids = self.filter_buy_with_prime_order(instance, order_ids)
         if order_ids:
             order_queues = order_data_queue_line_obj.create_order_data_queue_line(order_ids,
                                                                                   instance,
@@ -229,6 +254,15 @@ class ShopifyOrderDataQueueEpt(models.Model):
                 order_queues += order_queue_list
 
         return order_queues
+
+    def filter_buy_with_prime_order(self, instance, order_ids):
+        buy_with_prime_order_ids = []
+        for order_id in order_ids:
+            order = order_id.to_dict()
+            for buy_with_prime_tag in instance.buy_with_prime_tag_ids:
+                if buy_with_prime_tag.name in order.get("tags"):
+                    buy_with_prime_order_ids.append(order_id)
+        return buy_with_prime_order_ids
 
     def list_all_orders(self, result, instance, created_by, queue_type):
         """
@@ -249,7 +283,12 @@ class ShopifyOrderDataQueueEpt(models.Model):
         while result:
             page_info = ""
             # link: link of next page.
-            link = shopify.ShopifyResource.connection.response.headers.get('Link')
+            if not shopify.ShopifyResource.connection.response:
+                link = result.metadata and result.metadata.get('headers', {}).get('Link', {})
+            else:
+                link = shopify.ShopifyResource.connection.response.headers.get(
+                    "Link") if shopify.ShopifyResource.connection.response.headers.get(
+                    "Link") else shopify.ShopifyResource.connection.response.headers.get("link")
             if not link or not isinstance(link, str):
                 return order_queue_list
 
@@ -306,7 +345,7 @@ class ShopifyOrderDataQueueEpt(models.Model):
                                                                                       queue_type,
                                                                                       created_by="import")
                 return order_queues
-                #order_queue_obj.browse(order_queues).order_data_queue_line_ids.process_import_order_queue_data()
+                # order_queue_obj.browse(order_queues).order_data_queue_line_ids.process_import_order_queue_data()
         return True
 
     def create_schedule_activity(self, queue_id):

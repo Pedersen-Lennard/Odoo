@@ -58,7 +58,7 @@
                         domain="[('updated_in_shopify', '=', True)]"/>
                 <filter string="Order status not updated in Shopify"
                         name="order_status_not_updated"
-                        domain="[('updated_in_shopify', '!=', True)]"/>
+                        domain="['&amp;',('picking_ids.state','=','done'),('updated_in_shopify', '!=', True)]"/>
             </filter>
         </field>
     </record>
@@ -94,7 +94,6 @@
                                 <field name="shopify_instance_id" readonly="True"
                                        options="{'no_create':True,'no_create_edit':True}"/>
                                 <field name="shopify_order_status" readonly="True"/>
-                                <field name="shopify_order_note" readonly="True"/>
                             </group>
                             <group>
                                 <field name="is_risky_order"/>

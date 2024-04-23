@@ -6,7 +6,7 @@ import logging
 import time
 from datetime import datetime, timedelta
 
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from .. import shopify
 from ..shopify.pyactiveresource.connection import ClientError
@@ -49,6 +49,13 @@ class ShopifyProductProductEpt(models.Model):
     shopify_image_ids = fields.One2many("shopify.product.image.ept", "shopify_variant_id")
     taxable = fields.Boolean(default=True)
     last_stock_update_date = fields.Datetime(readonly=True, help="It is used in export stock process.")
+    fixed_stock_export = fields.Boolean(default=False)
+    fixed_stock_export_value = fields.Float(digits=0)
+
+    @api.onchange('fixed_stock_export_value')
+    def _onchange_fixed_export_stock_value(self):
+        if self.fixed_stock_export_value < 0:
+            raise UserError(_('There is no negative value allowed for the fixed export stock value.'))
 
     def toggle_active(self):
         """
@@ -269,6 +276,7 @@ class ShopifyProductProductEpt(models.Model):
             if not result:
                 message = "Product %s not exported in Shopify Store." % template.name
                 common_log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id, message=message,
+                                                               module="shopify_ept",
                                                                model_name=model)
             if result:
                 self.update_products_details_shopify_third_layer(new_product, template, is_publish)
@@ -358,7 +366,14 @@ class ShopifyProductProductEpt(models.Model):
             catch = ""
             while results:
                 page_info = ""
-                link = shopify.ShopifyResource.connection.response.headers.get("Link")
+                if not shopify.ShopifyResource.connection.response:
+                    link = results.metadata and results.metadata.get('headers', {}).get('Link', {})
+                else:
+                    link = shopify.ShopifyResource.connection.response.headers.get(
+                        "Link") if shopify.ShopifyResource.connection.response.headers.get(
+                        "Link") else shopify.ShopifyResource.connection.response.headers.get("link")
+                if not link or not isinstance(link, str):
+                    continue
                 for page_link in link.split(","):
                     if page_link.find("next") > 0:
                         page_info = page_link.split(";")[0].strip("<>").split("page_info=")[1]
@@ -405,6 +420,7 @@ class ShopifyProductProductEpt(models.Model):
             message = "Template %s not found in shopify while updating Product.\nError: %s" % (
                 template.shopify_tmpl_id, str(error))
             self.env["common.log.lines.ept"].create_common_log_line_ept(shopify_instance_id=instance.id,
+                                                                        module="shopify_ept",
                                                                         message=message,
                                                                         model_name=model)
             return False
@@ -461,6 +477,11 @@ class ShopifyProductProductEpt(models.Model):
             price = instance.shopify_pricelist_id._get_product_price(variant.product_id, 1.0, partner=False,
                                                                      uom_id=variant.product_id.uom_id.id)
             variant_vals.update({"price": float(price)})
+        if instance.shopify_compare_pricelist_id:
+            compare_at_price = instance.shopify_compare_pricelist_id._get_product_price(variant.product_id, 1.0,
+                                                                                        partner=False,
+                                                                                        uom_id=variant.product_id.uom_id.id)
+            variant_vals.update({"compare_at_price": float(compare_at_price)})
         if is_set_basic_detail:
             variant_vals = self.prepare_vals_for_product_basic_details(variant_vals, variant, instance)
 
@@ -570,8 +591,11 @@ class ShopifyProductProductEpt(models.Model):
         instance.connect_in_shopify()
         if not shopify_template.shopify_image_ids:
             return False
-
-        for image in shopify_template.shopify_image_ids:
+        if len(shopify_template.shopify_product_ids) == 1:
+            shopify_images = shopify_template.shopify_image_ids.filtered(lambda v: not v.shopify_variant_id)
+        else:
+            shopify_images = shopify_template.shopify_image_ids
+        for image in shopify_images:
             if image.odoo_image_id.image:
                 shopify_image = shopify.Image()
                 shopify_image.product_id = shopify_template.shopify_tmpl_id
@@ -813,7 +837,8 @@ class ShopifyProductProductEpt(models.Model):
         if not self._context.get('is_process_from_selected_product'):
             shopify_templates = self.check_available_products_in_shopify(instance)
             if shopify_templates:
-                shopify_products = shopify_templates.shopify_product_ids
+                shopify_products = shopify_templates.shopify_product_ids.filtered(
+                    lambda p: p.inventory_management == 'shopify')
 
         shopify_products = shopify_products.filtered(lambda l: l.product_id.id in product_ids)
         export_stock_data = []
@@ -841,9 +866,10 @@ class ShopifyProductProductEpt(models.Model):
                                       shopify_product.id, shopify_product.name, instance.name)
                         self.shopify_create_log(instance, message, model)
                         continue
-
-                    quantity = self.compute_qty_for_export_stock(product_stock, shopify_product, odoo_product)
-
+                    if not shopify_product.fixed_stock_export:
+                        quantity = self.compute_qty_for_export_stock(product_stock, shopify_product, odoo_product)
+                    else:
+                        quantity = shopify_product.fixed_stock_export_value
                     export_stock_data.append({'product_name': shopify_product.default_code,
                                               'shopify_product_id': shopify_product,
                                               'location_id': location_id.shopify_location_id,
@@ -1019,7 +1045,7 @@ class ShopifyProductProductEpt(models.Model):
                  ("shopify_instance_id", "=", instance.id)], limit=1)
             if shopify_product:
                 product_id = shopify_product.product_id
-                if product_id not in product_ids_list:
+                if product_id not in product_ids_list and product_id.detailed_type not in ['service', 'consu']:
                     stock_inventory_line = {
                         product_id.id: qty,
                     }
@@ -1040,7 +1066,9 @@ class ShopifyProductProductEpt(models.Model):
         while result:
             page_info = ""
             sum_inventory_list += result
-            link = shopify.ShopifyResource.connection.response.headers.get("Link")
+            link = shopify.ShopifyResource.connection.response.headers.get(
+                "Link") if shopify.ShopifyResource.connection.response.headers.get(
+                "Link") else shopify.ShopifyResource.connection.response.headers.get("link")
             if not link or not isinstance(link, str):
                 return sum_inventory_list
             for page_link in link.split(","):
@@ -1066,6 +1094,7 @@ class ShopifyProductProductEpt(models.Model):
         @Task ID: 157623
         """
         log_line = self.env["common.log.lines.ept"].create_common_log_line_ept(shopify_instance_id=instance.id,
+                                                                               module="shopify_ept",
                                                                                message=message,
                                                                                model_name=model)
         return log_line

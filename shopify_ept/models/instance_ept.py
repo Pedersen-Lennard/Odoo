@@ -6,7 +6,7 @@ import logging
 
 from calendar import monthrange
 from datetime import date, datetime, timedelta
-from odoo import models, fields, api, _
+from odoo import models, fields, api, _, modules
 from odoo.exceptions import UserError
 from .. import shopify
 from ..shopify.pyactiveresource.connection import ForbiddenAccess
@@ -161,6 +161,8 @@ class ShopifyInstanceEpt(models.Model):
                                                 "2.During order sync operation, this pricelist "
                                                 "will be set in the order if the order currency from store and the "
                                                 "currency from the pricelist set here, matches.")
+    shopify_compare_pricelist_id = fields.Many2one('product.pricelist', string='Compare Price Pricelist',
+                                                   help="During product sync, Import and Export operation operation, prices will be Imported/Exported using this Pricelist.")
 
     shopify_order_prefix = fields.Char(size=10, string='Order Prefix',
                                        help="Enter your order prefix")
@@ -225,6 +227,9 @@ class ShopifyInstanceEpt(models.Model):
     is_shopify_create_schedule = fields.Boolean("Create Schedule Activity ? ", default=False,
                                                 help="If checked, Then Schedule Activity create on order data queues"
                                                      " will any queue line failed.")
+    # fields for payout schedule activity
+    shopify_payout_user_ids = fields.Many2many('res.users', 'shopify_instance_ept_payout_res_users_rel',
+                                               'res_config_settings_id', 'res_users_id')
     active = fields.Boolean(default=True)
     sync_product_with_images = fields.Boolean("Sync Images?",
                                               help="Check if you want to import images along with "
@@ -258,6 +263,8 @@ class ShopifyInstanceEpt(models.Model):
                                                      help="Last date of sync orders from Shopify to Odoo")
     last_cancel_order_import_date = fields.Datetime(string="Last Date Of Cancel Order Import",
                                                     help="Last date of sync orders from Shopify to Odoo")
+    last_buy_with_prime_order_import_date = fields.Datetime(string="Last Date Of Buy with Prime Order Import",
+                                                            help="Last date of sync orders from Shopify to Odoo")
     is_instance_create_from_onboarding_panel = fields.Boolean(default=False)
     is_onboarding_configurations_done = fields.Boolean(default=False)
     shipping_product_id = fields.Many2one("product.product", domain=[('detailed_type', '=', 'service')],
@@ -324,6 +331,38 @@ class ShopifyInstanceEpt(models.Model):
     shopify_product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure',
                                              default=_default_UOM_category,
                                              )
+    ship_order_webhook = fields.Boolean("Want to ship order", default=True,
+                                        help="If checked, it will fulfill order in odoo")
+    forcefully_reserve_stock_webhook = fields.Boolean("ForceFully Reserve Stock",
+                                                      help="If checked, It will forcefully reserve stock in the picking")
+    refund_order_webhook = fields.Boolean("Want to refund order", default=True,
+                                          help="If checked, it will create a refund in odoo")
+    customer_order_webhook = fields.Boolean("Want to update customer",
+                                            help="If checked, it will update the customer in order")
+    update_qty_order_webhook = fields.Boolean("Want to update Quantity",
+                                              help="If checked, it will update the customer in order")
+    add_new_product_order_webhook = fields.Boolean("Want to Add New Product",
+                                                   help="If checked, it will add new product in the order if receive in the webhook")
+
+    import_buy_with_prime_shopify_order = fields.Boolean(string="Import Buy with Prime Orders",
+                                                         help="If checked, it will import order of buy with prime orders")
+    buy_with_prime_warehouse_id = fields.Many2one("stock.warehouse", string="Shopify Warehouse",
+                                                  domain="[('company_id', '=',shopify_company_id)]")
+    buy_with_prime_tag_ids = fields.Many2many("shopify.tags", "shopify_instance_buy_with_prime_shopify_tags_rel",
+                                              "product_tmpl_id", "tag_id",
+                                              "Tags for import buy with prime orders")
+    Force_transfer_move_of_buy_with_prime_orders = fields.Boolean(string="Force Transfer",
+                                                                  help="If checked, it will forcefully done the stock move while stock also not there.")
+    return_picking_order = fields.Boolean("Want to return picking", help="If checked, it will create a return in odoo")
+    stock_validate_for_return = fields.Boolean("Want to validate return picking",
+                                               help="If checked, it will validate a return picking")
+    return_location_id = fields.Many2one('stock.location', 'Return Location')
+    update_qty_to_invoice_order_webhook = fields.Boolean("Want to changes to invoice as per update Quantity",
+                                                         help="If checked, it will update invoice based on updated quantity")
+    credit_note_register_payment = fields.Boolean("Want to create register payment for credit note",
+                                                  help="If checked, it will create a payment for credit note")
+    credit_note_payment_journal = fields.Many2one("account.journal", string="Credit Note Payment Journal",
+                                                  help=" Selected Journal will be set in Credit note Payment journal.")
 
     _sql_constraints = [('unique_host', 'unique(shopify_host)',
                          "Instance already exists for given host. Host must be Unique for the instance!")]
@@ -880,9 +919,9 @@ class ShopifyInstanceEpt(models.Model):
         """
         shop = host.split("//")
         if len(shop) == 2:
-            shop_url = shop[0] + "//" + api_key + ":" + password + "@" + shop[1] + "/admin/api/2023-01"
+            shop_url = shop[0] + "//" + api_key + ":" + password + "@" + shop[1] + "/admin/api/2024-01"
         else:
-            shop_url = "https://" + api_key + ":" + password + "@" + shop[0] + "/admin/api/2023-01"
+            shop_url = "https://" + api_key + ":" + password + "@" + shop[0] + "/admin/api/2024-01"
 
         return shop_url
 
@@ -987,7 +1026,7 @@ class ShopifyInstanceEpt(models.Model):
         """
         topic_list = []
         if event == 'product':
-            topic_list = ["products/update", "products/delete"]
+            topic_list = ["products/create", "products/update", "products/delete"]
         if event == 'customer':
             topic_list = ["customers/create", "customers/update"]
         if event == 'order':

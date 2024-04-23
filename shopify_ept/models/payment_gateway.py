@@ -31,13 +31,13 @@ class ShopifyPaymentGateway(models.Model):
 
         try:
             results = shopify.Order().find(status="any", updated_at_min=from_date,
-                                           updated_at_max=to_date, fields=['gateway'], limit=250)
+                                           updated_at_max=to_date, fields=['payment_gateway_names'], limit=250)
         except ClientError as error:
             if hasattr(error, "response"):
                 if error.response.code == 429 and error.response.msg == "Too Many Requests":
                     time.sleep(int(float(error.response.headers.get('Retry-After', 5))))
                     results = shopify.Order().find(status="any", updated_at_min=from_date,
-                                                   updated_at_max=to_date, fields=['gateway'], limit=250)
+                                                   updated_at_max=to_date, fields=['payment_gateway_names'], limit=250)
                 else:
                     message = str(error.code) + "\n" + json.loads(error.response.body.decode()).get("errors")
                     raise UserError(message)
@@ -46,7 +46,13 @@ class ShopifyPaymentGateway(models.Model):
 
         for result in results:
             result = result.to_dict()
-            gateway = result.get('gateway') or "no_payment_gateway"
+            gateway = "no_payment_gateway"
+            payment_gateway_names = result.get('payment_gateway_names')
+            if payment_gateway_names and payment_gateway_names[0]:
+                if len(payment_gateway_names) == 1:
+                    gateway = payment_gateway_names[0]
+                elif 'gift_card' in payment_gateway_names:
+                    gateway = [val for val in payment_gateway_names if val != 'gift_card'][0]
             self.search_or_create_payment_gateway(instance, gateway)
 
         return True
@@ -101,6 +107,7 @@ class ShopifyPaymentGateway(models.Model):
                                                                                           'financial_status'),
                                                                                       order_status)
             common_log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id, message=message,
+                                                           module="shopify_ept",
                                                            model_name='sale.order',
                                                            order_ref=order_response.get('name'),
                                                            shopify_order_data_queue_line_id=order_data_queue_line.id
@@ -119,6 +126,7 @@ class ShopifyPaymentGateway(models.Model):
                       "Shopify > Configuration > Sale Auto " \
                       "Workflow" % auto_workflow_id.name
             common_log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id, message=message,
+                                                           module="shopify_ept",
                                                            model_name='sale.order',
                                                            order_ref=order_response.get('name'),
                                                            shopify_order_data_queue_line_id=order_data_queue_line.id

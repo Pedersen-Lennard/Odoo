@@ -200,7 +200,10 @@ class ProductProduct(models.Model):
 
         bom_product_ids = self.check_for_bom_products(product_ids)
         if bom_product_ids:
-            bom_products = self.with_context(warehouse=warehouse.ids).browse(bom_product_ids)
+            # Passed location instead of the warehouse in with_context, because it was doing export the product stock
+            # of all locations of the warehouse instead of the stock location of the warehouse.
+            bom_products = self.with_context(location=[int(location) for location in location_ids.split(',')]).browse(
+                bom_product_ids)
             for product in bom_products:
                 actual_stock = getattr(product, 'free_qty')
                 qty_on_hand.update({product.id: actual_stock})
@@ -214,6 +217,7 @@ class ProductProduct(models.Model):
             for i in result:
                 qty_on_hand.update({i.get('product_id'): i.get('stock')})
         return qty_on_hand
+
     def prepare_forecasted_qty_query_for_bom_product(self, location_ids, product_ids):
         query = (("""select product_id, free_qty+incoming_qty-outgoing_qty stock from (
             select sq.product_id, COALESCE(sum(sq.quantity)-sum(sq.reserved_quantity),0) free_qty,
@@ -239,19 +243,19 @@ class ProductProduct(models.Model):
         location_ids, product_ids = self.prepare_location_and_product_ids(warehouse, product_list)
 
         bom_product_ids = self.check_for_bom_products(product_ids)
-        bom_product_list_ids = ','.join(str(e) for e in bom_product_ids)
-        if bom_product_list_ids:
-            qry = self.prepare_forecasted_qty_query_for_bom_product(location_ids, bom_product_list_ids)
-            self._cr.execute(qry)
-            actual_stock = self._cr.dictfetchall()
-            for i in actual_stock:
-                forcasted_qty.update({i.get('product_id'): i.get('stock')})
-        # if bom_product_ids:
-        #     bom_products = self.with_context(warehouse=warehouse.ids).browse(bom_product_ids)
-        #     for product in bom_products:
-        #         actual_stock = getattr(product, 'free_qty') + getattr(product, 'incoming_qty') - getattr(product,
-        #                                                                                                  'outgoing_qty')
-        #         forcasted_qty.update({product.id: actual_stock})
+        # bom_product_list_ids = ','.join(str(e) for e in bom_product_ids)
+        # if bom_product_list_ids:
+        #     qry = self.prepare_forecasted_qty_query_for_bom_product(location_ids, bom_product_list_ids)
+        #     self._cr.execute(qry)
+        #     actual_stock = self._cr.dictfetchall()
+        #     for i in actual_stock:
+        #         forcasted_qty.update({i.get('product_id'): i.get('stock')})
+        if bom_product_ids:
+            bom_products = self.with_context(warehouse=warehouse.ids).browse(bom_product_ids)
+            for product in bom_products:
+                actual_stock = getattr(product, 'free_qty') + getattr(product, 'incoming_qty') - getattr(product,
+                                                                                                         'outgoing_qty')
+                forcasted_qty.update({product.id: actual_stock})
 
         simple_product_list = list(set(product_list) - set(bom_product_ids))
         simple_product_list_ids = ','.join(str(e) for e in simple_product_list)
@@ -289,3 +293,15 @@ class ProductProduct(models.Model):
             for i in result:
                 onhand_qty.update({i.get('product_id'): i.get('stock')})
         return onhand_qty
+
+    def _prepare_out_svl_vals(self, quantity, company):
+        """
+        This method is used if MRP installed, BOM type is Manufacturing
+        and While processing shipped order workflow via Webhook. Then it
+        will process workflow with OdooBot User not public user.
+        @error: Receive error while process auto invoice workflow,
+        Error is:(You are not allowed to access 'Bill of Material' (mrp.bom) records.
+        """
+        if 'is_connector' in self._context and self._context.get('is_connector'):
+            self = self.with_user(1)
+        return super(ProductProduct, self)._prepare_out_svl_vals(quantity, company)

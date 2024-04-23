@@ -123,6 +123,7 @@
                                     <field name="shopify_last_date_product_import"/>
                                     <field name="last_date_order_import"/>
                                     <field name="payout_last_import_date"/>
+                                    <field name="last_buy_with_prime_order_import_date"/>
                                 </group>
                                 <group>
                                     <field name="shopify_last_date_customer_import"/>

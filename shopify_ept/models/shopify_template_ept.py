@@ -238,13 +238,13 @@ class ShopifyProductTemplateEpt(models.Model):
         from_sale = False
 
         if product_data_line_id:
-            common_log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id,
+            common_log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id,module="shopify_ept",
                                                            message=message,
                                                            model_name=model_name,
                                                            shopify_product_data_queue_line_id=product_data_line_id.id)
             product_data_line_id.write({"state": "failed", "last_process_date": datetime.now()})
         elif order_data_line_id:
-            common_log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id,
+            common_log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id,module="shopify_ept",
                                                            message=message,
                                                            model_name=model_name,
                                                            shopify_order_data_queue_line_id=order_data_line_id.id)
@@ -606,6 +606,10 @@ class ShopifyProductTemplateEpt(models.Model):
 
             instance.shopify_pricelist_id.set_product_price_ept(shopify_product.product_id.id, variant.get("price"))
 
+            if instance.shopify_compare_pricelist_id:
+                instance.shopify_compare_pricelist_id.set_product_price_ept(shopify_product.product_id.id, variant.get("compare_at_price"))
+
+
         return shopify_template
 
     def check_sku_barcode(self, sku, barcode, name, variant_id, match_by):
@@ -643,7 +647,6 @@ class ShopifyProductTemplateEpt(models.Model):
                                                                     odoo_product)
 
         return shopify_template, shopify_product
-
     def check_for_new_variant(self, odoo_template, shopify_attributes, variant_data, shopify_template, variant_vals):
         """
         Checks if the shopify product has new attribute is added.
@@ -1213,7 +1216,7 @@ class ShopifyProductTemplateEpt(models.Model):
                                         "website_published": website_published})
             except:
                 message = "Template %s not found in shopify When Publish" % self.shopify_tmpl_id
-                common_log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id,
+                common_log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id,module="shopify_ept",
                                                                message=message,
                                                                model_name="shopify.product.template.ept")
 

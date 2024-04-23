@@ -4,7 +4,7 @@ import logging
 import time
 
 from datetime import datetime,timedelta
-from odoo import models, fields, _
+from odoo import models, fields, api,_
 from odoo.exceptions import UserError
 from .. import shopify
 from ..shopify.pyactiveresource.connection import ClientError
@@ -61,7 +61,7 @@ class ShopifyPaymentReportEpt(models.Model):
             payout_reports = shopify.Payouts().find(status="paid", date_min=start_date, date_max=end_date, limit=250)
         except Exception as error:
             message = "Something is wrong while import the payout records : {0}".format(error)
-            log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id,
+            log_line_obj.create_common_log_line_ept(shopify_instance_id=instance.id,module="shopify_ept",
                                                     message=message,
                                                     model_name=self._name)
             _logger.info(message)
@@ -146,7 +146,9 @@ class ShopifyPaymentReportEpt(models.Model):
         transactions_list = []
         catch = ""
         while result:
-            link = shopify.ShopifyResource.connection.response.headers.get("Link")
+            link = shopify.ShopifyResource.connection.response.headers.get(
+                "Link") if shopify.ShopifyResource.connection.response.headers.get(
+                "Link") else shopify.ShopifyResource.connection.response.headers.get("link")
             if not link or not isinstance(link, str):
                 return transactions_list
             page_info = ""
@@ -337,7 +339,7 @@ class ShopifyPaymentReportEpt(models.Model):
                     # We can not use shopify order reference here because it may create duplicate name,
                     # and name of journal entry should be unique per company. So here I have used transaction Id
                     bank_line_vals = {
-                        'name': transaction.transaction_id,
+                        # 'name': transaction.transaction_id,
                         'payment_ref': transaction.transaction_id,
                         'date': self.payout_date,
                         'amount': transaction.amount,
@@ -388,8 +390,8 @@ class ShopifyPaymentReportEpt(models.Model):
                                                                                                    ==
                                                                                                    transaction.transaction_type).account_id
                 bank_line_vals = {
-                    'name': name or reference,
-                    'payment_ref': reference,
+                    # 'name': name or reference,
+                    'payment_ref': name or reference,
                     'date': self.payout_date,
                     'partner_id': partner and partner.id,
                     'amount': transaction.amount,
@@ -445,6 +447,20 @@ class ShopifyPaymentReportEpt(models.Model):
             invoice_ids = order_id.invoice_ids.filtered(lambda x:
                                                         x.state == 'posted' and x.move_type == 'out_refund' and
                                                         x.amount_total == -transaction.amount)
+            if not invoice_ids:
+                shopify_instance = order_id.shopify_instance_id
+                shopify_instance.connect_in_shopify()
+                shopify_order = shopify.Order().find(order_id.shopify_order_id)
+                orders_data = shopify_order.to_dict()
+                shopify_order_status = orders_data.get("financial_status")
+                if shopify_order_status in ["refunded", "partially_refunded"] and orders_data.get("refunds"):
+                    created_by = 'import'
+                    queue_line = self.env["shopify.order.data.queue.line.ept"]
+                    order_id.process_order_refund_data_ept(shopify_order_status, orders_data, order_id, created_by,
+                                                           shopify_instance, queue_line)
+                invoice_ids = order_id.invoice_ids.filtered(lambda x:
+                                                            x.state == 'posted' and x.move_type == 'out_refund' and
+                                                            x.amount_total == -transaction.amount)
             if not invoice_ids:
                 message = "In Shopify Payout, there is a Refund, but Refund amount is not matched for order %s in" \
                           "odoo" % (order_id.name or transaction.source_order_id)
@@ -662,7 +678,7 @@ class ShopifyPaymentReportEpt(models.Model):
                               statement_line.amount)
                 log_lines.append({"message": message,
                                   "shopify_payout_report_line_id": transaction_line.id})
-                statement_line.button_undo_reconciliation()
+                statement_line.action_undo_reconciliation()
         return log_lines
 
     def shopify_reconcile_bank_statement_line_ept(self, statement_line_id, move_line_id):
@@ -781,7 +797,8 @@ class ShopifyPaymentReportEpt(models.Model):
         self.state = 'validated'
         return True
 
-    def create(self, vals):
+    @api.model_create_multi
+    def create(self, vals_list):
         """
         Use : Inherit Create method to Create Unique sequence for import payout.
         Added by : Deval Jagad
@@ -790,9 +807,10 @@ class ShopifyPaymentReportEpt(models.Model):
         :param vals: dictionary
         :return: result
         """
-        if vals.get('name', _('New')) == _('New'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('shopify.payout.report.ept') or _('New')
-        result = super(ShopifyPaymentReportEpt, self).create(vals)
+        for vals in vals_list:
+            if vals.get('name', _('New')) == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('shopify.payout.report.ept') or _('New')
+        result = super(ShopifyPaymentReportEpt, self).create(vals_list)
         return result
 
     def unlink(self):
@@ -878,7 +896,7 @@ class ShopifyPaymentReportEpt(models.Model):
         @author: Maulik Barad on Date 09-Dec-2020.
         """
         for log_line in log_lines:
-            self.env["common.log.lines.ept"].create_common_log_line_ept(shopify_instance_id=self.instance_id.id,
+            self.env["common.log.lines.ept"].create_common_log_line_ept(shopify_instance_id=self.instance_id.id,module="shopify_ept",
                                                                         message=log_line.get('message'),
                                                                         model_name=self._name)
 

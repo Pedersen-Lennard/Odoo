@@ -88,6 +88,10 @@ class ShopifyInstanceConfig(models.TransientModel):
                 "An instance already exists for the given details \nShopify API key : '%s' \nShopify Host : '%s'" % (
                     self.shopify_api_key, self.shopify_host)))
 
+        if not self.shopify_host.__contains__('myshopify') or not self.shopify_host.__contains__('https'):
+            raise UserError(
+                _("A host should contain both 'https' and 'myshopify', for example: 'https://odoo-v16.myshopify.com'. You can refer the host in your Shopify store: Shopify => Settings => Domains"))
+
         shop_url = instance_obj.prepare_shopify_shop_url(self.shopify_host, self.shopify_api_key, self.shopify_password)
 
         shopify.ShopifyResource.set_site(shop_url)
@@ -208,6 +212,22 @@ class ResConfigSettings(models.TransientModel):
                 [('shopify_instance_id', '=', self._context.get('default_shopify_instance_id', False))]).ids
             return [(6, 0, financial_status_ids)]
 
+    @api.model
+    def _default_buy_with_prime_tag_ids(self):
+        """ Set default tag for buy with prime order.
+            @author: Nilam Kubavat @Emipro Technologies Pvt. Ltd on date 18 December 2023.
+            Task_id: 4726
+        """
+        tag_ids = self.env.ref('shopify_ept.shopify_product_tag_buy_with_prime')
+        return [(6, 0, [tag_ids.id])] if tag_ids else False
+
+    @api.model
+    def _get_default_return_location(self):
+        shopify_location_obj = self.env['shopify.location.ept']
+        shopify_warehouse = shopify_location_obj.search([]).warehouse_for_order
+        locations = self.env['stock.location'].search([('location_id', 'child_of', shopify_warehouse.lot_stock_id.ids)])
+        return [('id', 'in', locations.ids)]
+
     shopify_instance_id = fields.Many2one("shopify.instance.ept", "Shopify Instance")
     shopify_company_id = fields.Many2one("res.company", string="Shopify Instance Company",
                                          help="Orders and Invoices will be generated of this company.")
@@ -229,6 +249,9 @@ class ResConfigSettings(models.TransientModel):
     shopify_pricelist_id = fields.Many2one("product.pricelist", string="Shopify Pricelist",
                                            help="Select Pricelist, This price list used to import the "
                                                 "product price and set this pricelist in Shopify sale order")
+    shopify_compare_pricelist_id = fields.Many2one("product.pricelist", string="Shopify Compare Price Pricelist",
+                                                   help="Select Pricelist, This price list used to import the "
+                                                        "product price and set this pricelist in Shopify sale order")
     shopify_stock_field = fields.Many2one("ir.model.fields", string="Stock Field",
                                           help="Select inventory field for shopify products")
     shopify_section_id = fields.Many2one("crm.team", "Shopify Sales Team", help="Set the sales team for shopify orders")
@@ -262,6 +285,11 @@ class ResConfigSettings(models.TransientModel):
                                                 help="If checked, Then it will create Schedule Activity against "
                                                      "order data queues will any queue line failed, Export stock "
                                                      "queue and update order status")
+    # fields for payout schedule activity
+    shopify_payout_user_ids = fields.Many2many('res.users', 'shopify_res_config_payout_settings_res_users_rel',
+                                               'res_config_settings_id', 'res_users_id',
+                                               string='Responsible User For Payout Reports', domain=lambda self: [
+            ('groups_id', 'in', self.env.ref('account.group_account_user').id)])
     shopify_sync_product_with_images = fields.Boolean("Sync/Import Images?", default=False,
                                                       help="Check if you want to import images along with products")
     create_shopify_products_webhook = fields.Boolean("Manage Shopify Products via Webhooks",
@@ -341,6 +369,41 @@ class ResConfigSettings(models.TransientModel):
                                                      "child partner of Company.")
     shopify_product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure',
                                              domain="[('category_id.name', '=', 'Weight')]")
+    use_default_terms_and_condition_of_odoo = fields.Boolean("Use Default Terms & Condition of Odoo",
+                                                             config_parameter="shopify_ept.use_default_terms_and_condition_of_odoo",
+                                                             help="If checked, it will set the custom note and default terms and condition in order note")
+    ship_order_webhook = fields.Boolean("Want to ship order", help="If checked, it will fulfill order in odoo")
+    forcefully_reserve_stock_webhook = fields.Boolean("ForceFully Reserve Stock",
+                                                      help="If checked, It will forcefully reserve stock in the picking")
+    refund_order_webhook = fields.Boolean("Want to refund order", help="If checked, it will create a refund in odoo")
+    customer_order_webhook = fields.Boolean("Want to update customer",
+                                            help="If checked, it will update the customer in order")
+    update_qty_order_webhook = fields.Boolean("Want to update Quantity",
+                                              help="If checked, it will update the customer in order")
+    add_new_product_order_webhook = fields.Boolean("Want to Add New Product",
+                                                   help="If checked, it will add new product in the order if receive in the webhook")
+
+    import_buy_with_prime_shopify_order = fields.Boolean(string="Import Buy with Prime Orders",
+                                                         help="If checked, it will import order of buy with prime orders")
+    buy_with_prime_warehouse_id = fields.Many2one("stock.warehouse", string="Shopify Warehouse for Buy with prime",
+                                                  domain="[('company_id', '=',shopify_company_id)]")
+    buy_with_prime_tag_ids = fields.Many2many("shopify.tags", "buy_with_prime_shopify_tags_rel",
+                                              "product_tmpl_id", "tag_id",
+                                              "Tags for import buy with prime orders",
+                                              default=_default_buy_with_prime_tag_ids)
+    Force_transfer_move_of_buy_with_prime_orders = fields.Boolean(string="Force Transfer",
+                                                                  help="If checked, it will forcefully done the stock move while stock also not there.")
+    return_picking_order = fields.Boolean("Want to return picking", help="If checked, it will create a return in odoo")
+    stock_validate_for_return = fields.Boolean("Want to validate return picking",
+                                               help="If checked, it will validate a return picking")
+    return_location_id = fields.Many2one('stock.location', 'Return Location',
+                                         domain=lambda self: self._get_default_return_location())
+    update_qty_to_invoice_order_webhook = fields.Boolean("Want to changes to invoice as per update Quantity",
+                                                         help="If checked, it will update invoice based on updated quantity")
+    credit_note_register_payment = fields.Boolean("Want to create register payment for credit note",
+                                                  help="If checked, it will create a payment for credit note")
+    credit_note_payment_journal = fields.Many2one("account.journal", string="Credit Note Payment Journal",
+                                                           help=" Selected Journal will be set in Credit note Payment journal.")
 
     @api.onchange("shopify_instance_id")
     def onchange_shopify_instance_id(self):
@@ -351,6 +414,7 @@ class ResConfigSettings(models.TransientModel):
             self.auto_import_product = instance.auto_import_product or False
             self.shopify_sync_product_with = instance.shopify_sync_product_with
             self.shopify_pricelist_id = instance.shopify_pricelist_id and instance.shopify_pricelist_id.id or False
+            self.shopify_compare_pricelist_id = instance.shopify_compare_pricelist_id and instance.shopify_compare_pricelist_id.id or False
             self.shopify_stock_field = instance.shopify_stock_field and instance.shopify_stock_field.id or False
             self.shopify_section_id = instance.shopify_section_id.id or False
             self.shopify_order_prefix = instance.shopify_order_prefix
@@ -373,7 +437,7 @@ class ResConfigSettings(models.TransientModel):
             self.shopify_payout_last_date_import = instance.payout_last_import_date or False
             self.shopify_settlement_report_journal_id = instance.shopify_settlement_report_journal_id or False
             self.shopify_order_status_ids = instance.shopify_order_status_ids.ids
-            self.auto_fulfill_gift_card_order = instance.auto_fulfill_gift_card_order
+            # self.auto_fulfill_gift_card_order = instance.auto_fulfill_gift_card_order
             self.shopify_import_order_after_date = instance.import_order_after_date or False
             self.shopify_analytic_account_id = instance.shopify_analytic_account_id.id or False
             # self.shopify_analytic_tag_ids = instance.shopify_analytic_tag_ids.ids
@@ -385,6 +449,23 @@ class ResConfigSettings(models.TransientModel):
             self.is_delivery_multi_warehouse = instance.is_delivery_multi_warehouse or False
             self.import_customer_as_company = instance.import_customer_as_company or False
             self.shopify_product_uom_id = instance.shopify_product_uom_id and instance.shopify_product_uom_id.id or False
+            self.ship_order_webhook = instance.ship_order_webhook
+            self.forcefully_reserve_stock_webhook = instance.forcefully_reserve_stock_webhook
+            self.refund_order_webhook = instance.refund_order_webhook
+            self.customer_order_webhook = instance.customer_order_webhook
+            self.update_qty_order_webhook = instance.update_qty_order_webhook
+            self.add_new_product_order_webhook = instance.add_new_product_order_webhook
+            self.import_buy_with_prime_shopify_order = instance.import_buy_with_prime_shopify_order
+            self.buy_with_prime_warehouse_id = instance.buy_with_prime_warehouse_id and instance.buy_with_prime_warehouse_id.id or False
+            self.Force_transfer_move_of_buy_with_prime_orders = instance.Force_transfer_move_of_buy_with_prime_orders
+            self.buy_with_prime_tag_ids = instance.buy_with_prime_tag_ids.ids
+            self.shopify_payout_user_ids = instance.shopify_payout_user_ids or False
+            self.return_picking_order = instance.return_picking_order
+            self.stock_validate_for_return = instance.stock_validate_for_return
+            self.return_location_id = instance.return_location_id and instance.return_location_id.id or False
+            self.update_qty_to_invoice_order_webhook = instance.update_qty_to_invoice_order_webhook
+            self.credit_note_register_payment = instance.credit_note_register_payment or False
+            self.credit_note_payment_journal = instance.credit_note_payment_journal or False
 
     def execute(self):
         """This method used to set value in an instance of configuration.
@@ -401,6 +482,8 @@ class ResConfigSettings(models.TransientModel):
             values["auto_import_product"] = self.auto_import_product or False
             values["shopify_sync_product_with"] = self.shopify_sync_product_with
             values["shopify_pricelist_id"] = self.shopify_pricelist_id and self.shopify_pricelist_id.id or False
+            values[
+                "shopify_compare_pricelist_id"] = self.shopify_compare_pricelist_id and self.shopify_compare_pricelist_id.id or False
             values["shopify_stock_field"] = self.shopify_stock_field and self.shopify_stock_field.id or False
             values["shopify_section_id"] = self.shopify_section_id and self.shopify_section_id.id or False
             values["shopify_order_prefix"] = self.shopify_order_prefix
@@ -424,7 +507,7 @@ class ResConfigSettings(models.TransientModel):
             values["payout_last_import_date"] = self.shopify_payout_last_date_import or False
             values["shopify_settlement_report_journal_id"] = self.shopify_settlement_report_journal_id or False
             values['shopify_order_status_ids'] = [(6, 0, self.shopify_order_status_ids.ids)]
-            values["auto_fulfill_gift_card_order"] = self.auto_fulfill_gift_card_order
+            # values["auto_fulfill_gift_card_order"] = self.auto_fulfill_gift_card_order
             values["import_order_after_date"] = self.shopify_import_order_after_date
             values["shopify_analytic_account_id"] = self.shopify_analytic_account_id and \
                                                     self.shopify_analytic_account_id.id or False
@@ -437,8 +520,25 @@ class ResConfigSettings(models.TransientModel):
             values["is_delivery_multi_warehouse"] = self.is_delivery_multi_warehouse or False
             values["import_customer_as_company"] = self.import_customer_as_company or False
             values['shopify_product_uom_id'] = self.shopify_product_uom_id and self.shopify_product_uom_id.id or False
-
+            values['ship_order_webhook'] = self.ship_order_webhook
+            values['forcefully_reserve_stock_webhook'] = self.forcefully_reserve_stock_webhook
+            values['refund_order_webhook'] = self.refund_order_webhook
+            values['customer_order_webhook'] = self.customer_order_webhook
+            values['update_qty_order_webhook'] = self.update_qty_order_webhook
+            values['add_new_product_order_webhook'] = self.add_new_product_order_webhook
+            values['import_buy_with_prime_shopify_order'] = self.import_buy_with_prime_shopify_order
+            values[
+                "buy_with_prime_warehouse_id"] = self.buy_with_prime_warehouse_id and self.buy_with_prime_warehouse_id.id or False
+            values['Force_transfer_move_of_buy_with_prime_orders'] = self.Force_transfer_move_of_buy_with_prime_orders
+            values['buy_with_prime_tag_ids'] = [(6, 0, self.buy_with_prime_tag_ids.ids)]
+            values.update({"shopify_payout_user_ids": [(6, 0, self.shopify_payout_user_ids.ids)]})
+            values['return_picking_order'] = self.return_picking_order
+            values['stock_validate_for_return'] = self.stock_validate_for_return
+            values["return_location_id"] = self.return_location_id and self.return_location_id.id or False
             product_webhook_changed = customer_webhook_changed = order_webhook_changed = False
+            values['update_qty_to_invoice_order_webhook'] = self.update_qty_to_invoice_order_webhook
+            values['credit_note_register_payment'] = self.credit_note_register_payment
+            values['credit_note_payment_journal'] = self.credit_note_payment_journal or False
             if instance.create_shopify_products_webhook != self.create_shopify_products_webhook:
                 product_webhook_changed = True
             if instance.create_shopify_customers_webhook != self.create_shopify_customers_webhook:
@@ -588,6 +688,7 @@ class ResConfigSettings(models.TransientModel):
                 'sync_product_with_images': self.shopify_sync_product_with_images or False,
                 'shopify_sync_product_with': self.shopify_sync_product_with or False,
                 'shopify_pricelist_id': self.shopify_pricelist_id and self.shopify_pricelist_id.id or False,
+                'shopify_compare_pricelist_id': self.shopify_compare_pricelist_id and self.shopify_compare_pricelist_id.id or False,
                 'shopify_section_id': self.shopify_section_id and self.shopify_section_id.id or False,
                 'is_use_default_sequence': self.shopify_is_use_default_sequence,
                 'shopify_order_prefix': self.shopify_order_prefix or False,
@@ -642,7 +743,8 @@ class ResConfigSettings(models.TransientModel):
                 "is_shopify_create_schedule": self.is_shopify_create_schedule,
                 "shopify_user_ids": [(6, 0, self.shopify_user_ids.ids)],
                 "shopify_activity_type_id": self.shopify_activity_type_id and self.shopify_activity_type_id.id or False,
-                "shopify_date_deadline": self.shopify_date_deadline or False
+                "shopify_date_deadline": self.shopify_date_deadline or False,
+                "credit_note_payment_journal": self.credit_note_payment_journal or False,
             })
 
             if product_webhook_changed:
