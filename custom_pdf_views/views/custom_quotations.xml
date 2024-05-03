@@ -1,0 +1,189 @@
+<?xml version="1.0"?>
+<odoo>
+    <data>
+<!--        <template id="customisation_purchase_order_form" inherit_id="purchase.purchase_order_form">-->
+<!--            <xpath expr="//field[@name='sequence']" position="after">-->
+<!--                <field name="default_code"/>-->
+<!--            </xpath>-->
+<!--            <xpath expr="/form/sheet/notebook/page/field[2]/form/group/group/field[8]" position="after">-->
+<!--                <field name="x_default_code"/>-->
+<!--            </xpath>-->
+<!--        </template>-->
+
+        <template id="customisation_purchase_order" inherit_id="purchase.report_purchaseorder_document">
+            <xpath expr="/t/t/div/table/thead/tr/th[2]" position="replace">
+                <th name="th_taxes">
+                    <strong>VAT</strong>
+                </th>
+            </xpath>
+
+            <xpath expr="/t/t/div/table/thead/tr/th[1]" position="before">
+                <th name="th_reference">
+                    <strong>Item Code</strong>
+                </th>
+            </xpath>
+
+            <xpath expr="/t/t/div/table/thead/tr/th[4]" position="after">
+                <th name="th_discount">
+                    <strong>Disc %</strong>
+                </th>
+            </xpath>
+
+            <xpath expr="/t/t/div/table/tbody/t[2]/tr/t/td[1]" position="before">
+                <td id="item-reference">
+                    <span t-field="line.default_code"/>
+                </td>
+            </xpath>
+
+            <xpath expr="/t/t/div/table/tbody/t[2]/tr/t/td[5]" position="before">
+                <td id="item-discount">
+                    <span t-field="line.discount"/>
+                </td>
+            </xpath>
+
+            <xpath expr="/t/t/div" position="after">
+                <div class="page" name="testing" style="page-break-before: always;">
+                    <span>
+                        <strong>PAYMENT TERMS:</strong>
+                        A 50% deposit is required to put orders into production. Balance payment in full is required
+                        prior to dispatch of order
+                    </span>
+                    <div/>
+                    <br/>
+                    <span>Please use the correct quote or invoice number as the payment Reference Number so that we can
+                        allocate your payment to the correct order.
+                    </span>
+                    <div/>
+                    <span>Please send proof of payment to <a href="mailto:admin@pedersenlennard.co.za">
+                        admin@pedersenlennard.co.za
+                    </a> .
+                    </span>
+                    <div/>
+                    <br/>
+                    <span>
+                        <strong>BANK DETAILS:</strong>
+                    </span>
+                    <span style="color: red;">Capitec Business / Acc: 1050 677838 / Branch No: 450105 / Swift Code:
+                        CABLZAJJ / Reference:
+                        Quote or Invoice number
+                    </span>
+                    <div/>
+                    <br/>
+                    <span><strong>LEAD TIME:</strong>Kindly note our current lead times:
+                    </span>
+                    <div/>
+                    <span>- Homeware and accessories: 5 weeks.</span>
+                    <div/>
+                    <span>- Furniture items: 6 weeks</span>
+                    <div/>
+                    <span>A delivery date will be confirmed closer to completion.</span>
+                    <div/>
+                    <br/>
+                    <span>TERMS AND CONDITIONS:</span>
+                    <div/>
+                    <span>The purchase of the product/s from Pedersen + Lennard is subject to the terms and conditions
+                        of sale as contained on the website, http://pedersenlennard.co.za/about/faqs/.
+                        A copy can also be requested by you in-store or on email and will be provided upon such express
+                        request. By purchasing this product/s you confirm your unconditional
+                        acceptance of the terms and conditions of sale.
+                    </span>
+                    <div/>
+                    <br/>
+                    <span>IMPORTANT TO NOTE:</span>
+                    <div/>
+                    <span>Timber is a natural product and is affected by change in humidity – if not properly cared for
+                        may lead to cracking or warping. Please take note of our care instructions and
+                        action accordingly, as failure to do so may void warranty. If unsure, please contact us and
+                        we’ll gladly assist.
+                    </span>
+                </div>
+            </xpath>
+        </template>
+
+        <template id="customisation_sales_order" inherit_id="sale.report_saleorder_document">
+
+            <xpath expr="/t/t/div/h2/span[2]" position="replace">
+                <span t-elif="doc.state in ['draft','sent']">Sale Quotation #</span>
+            </xpath>
+
+            <xpath expr="/t/t/div/h2/span[3]" position="replace">
+                <span t-else="">Sale Order #</span>
+            </xpath>
+
+            <xpath expr="/t/t/div/table/thead/tr/th[5]" position="replace">
+                <th name="th_taxes" class="text-end">VAT</th>
+            </xpath>
+
+            <xpath expr="/t/t/div/table/thead/tr/th[1]" position="before">
+                <th name="th_code" class="text-start">
+                    <strong>Item Code</strong>
+                </th>
+            </xpath>
+
+            <xpath expr="//td[@name='td_name']" position="before">
+                <td name="item_reference">
+                    <span t-if="line.x_default_code" t-field="line.x_default_code">Extra Large</span>
+                </td>
+            </xpath>
+
+
+            <xpath expr="/t/t/div" position="after">
+                <div class="page" name="testing" style="page-break-before: always;">
+                    <span>
+                        <strong>PAYMENT TERMS:</strong>
+                        A 50% deposit is required to put orders into production. Balance payment in full is required
+                        prior to dispatch of order
+                    </span>
+                    <div/>
+                    <br/>
+                    <span>Please use the correct quote or invoice number as the payment Reference Number so that we can
+                        allocate your payment to the correct order.
+                    </span>
+                    <div/>
+                    <span>Please send proof of payment to <a href="mailto:admin@pedersenlennard.co.za">
+                        admin@pedersenlennard.co.za
+                    </a> .
+                    </span>
+                    <div/>
+                    <br/>
+                    <span>
+                        <strong>BANK DETAILS:</strong>
+                    </span>
+                    <span style="color: red;">Capitec Business / Acc: 1050 677838 / Branch No: 450105 / Swift Code:
+                        CABLZAJJ / Reference:
+                        Quote or Invoice number
+                    </span>
+                    <div/>
+                    <br/>
+                    <span><strong>LEAD TIME:</strong>Kindly note our current lead times:
+                    </span>
+                    <div/>
+                    <span>- Homeware and accessories: 5 weeks.</span>
+                    <div/>
+                    <span>- Furniture items: 6 weeks</span>
+                    <div/>
+                    <span>A delivery date will be confirmed closer to completion.</span>
+                    <div/>
+                    <br/>
+                    <span>TERMS AND CONDITIONS:</span>
+                    <div/>
+                    <span>The purchase of the product/s from Pedersen + Lennard is subject to the terms and conditions
+                        of sale as contained on the website, http://pedersenlennard.co.za/about/faqs/.
+                        A copy can also be requested by you in-store or on email and will be provided upon such express
+                        request. By purchasing this product/s you confirm your unconditional
+                        acceptance of the terms and conditions of sale.
+                    </span>
+                    <div/>
+                    <br/>
+                    <span>IMPORTANT TO NOTE:</span>
+                    <div/>
+                    <span>Timber is a natural product and is affected by change in humidity – if not properly cared for
+                        may lead to cracking or warping. Please take note of our care instructions and
+                        action accordingly, as failure to do so may void warranty. If unsure, please contact us and
+                        we’ll gladly assist.
+                    </span>
+                </div>
+            </xpath>
+        </template>
+    </data>
+</odoo>
