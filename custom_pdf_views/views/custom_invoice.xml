@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+<odoo>
+    <data>
+        <template id="customisation_invoice" inherit_id="account.report_invoice_document">
+            <xpath expr="/t/t/div[2]/div/table/thead/tr/th[5]" position="replace">
+                <th name="th_taxes"
+                    t-attf-class="text-start {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                    <span>VAT</span>
+                </th>
+            </xpath>
+
+            <xpath expr="/t/t/div[2]/div/table/thead/tr/th[1]" position="before">
+                <th name="th_code" class="text-start">
+                    <span>Item Code</span>
+                </th>
+            </xpath>
+
+            <xpath expr="/t/t/div[2]/div/h2/span[3]" position="replace">
+                <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">Tax Invoice</span>
+            </xpath>
+
+            <xpath expr="//td[@name='account_invoice_line_name']" position="before">
+                <td name="item_reference">
+                    <span t-if="line.x_default_code" t-field="line.x_default_code" t-options="{'widget': 'text'}">Extra Large</span>
+                </td>
+            </xpath>
+
+            <xpath expr="/t/t/div[2]/div" position="after">
+                <div class="page" name="testing" style="page-break-before: always;">
+                    <div t-attf-class="#{'col-auto col-3 mw-100' if report_type != 'html' else 'col'} mb-2"
+                         name="due_date">
+                        <strong>Due Date:</strong>
+                        <span t-field="o.invoice_date_due">2023-10-31</span>
+                    </div>
+                    <div/>
+                    <br/>
+                    <span>
+                        <strong>PAYMENT TERMS:</strong>
+                        A 50% deposit is required to put orders into production. Balance payment in full is required
+                        prior to dispatch of order
+                    </span>
+                    <div/>
+                    <br/>
+                    <span>Please use the <strong>correct quote or invoice number as the payment Reference Number
+                    </strong> so that we can
+                        allocate your payment to the correct order.
+                    </span>
+                    <div/>
+                    <span>Please send proof of payment to <a href="mailto:admin@pedersenlennard.co.za">
+                        admin@pedersenlennard.co.za
+                    </a> .
+                    </span>
+                    <div/>
+                    <br/>
+                    <span>
+                        <strong>BANK DETAILS:</strong>
+                    </span>
+                    <span style="color: red;">Capitec Business / Acc: 1050 677838 / Branch No: 450105 / Swift Code:
+                        CABLZAJJ / Reference:
+                        Quote or Invoice number
+                    </span>
+                    <div/>
+                    <br/>
+                    <span><strong>LEAD TIME:</strong>Kindly note our current lead times:
+                    </span>
+                    <div/>
+                    <span>- Homeware and accessories: 5 weeks.</span>
+                    <div/>
+                    <span>- Furniture items: 6 weeks</span>
+                    <div/>
+                    <span>A delivery date will be confirmed closer to completion.</span>
+                    <div/>
+                    <br/>
+                    <span>TERMS AND CONDITIONS:</span>
+                    <div/>
+                    <span>The purchase of the product/s from Pedersen + Lennard is subject to the terms and conditions
+                        of sale as contained on the website, http://pedersenlennard.co.za/about/faqs/.
+                        A copy can also be requested by you in-store or on email and will be provided upon such express
+                        request. By purchasing this product/s you confirm your unconditional
+                        acceptance of the terms and conditions of sale.
+                    </span>
+                    <div/>
+                    <br/>
+                    <span>IMPORTANT TO NOTE:</span>
+                    <div/>
+                    <span>Timber is a natural product and is affected by change in humidity – if not properly cared for
+                        may lead to cracking or warping. Please take note of our care instructions and
+                        action accordingly, as failure to do so may void warranty. If unsure, please contact us and
+                        we’ll gladly assist.
+                    </span>
+                </div>
+            </xpath>
+        </template>
+    </data>
+</odoo>
