@@ -127,6 +127,13 @@
             </xpath>
 
 
+            <xpath expr="//td[@name='td_name']" position="replace">
+                <td name="td_name">
+                    <span t-if="line.product_id" t-field="line.product_id">Extra Large</span>
+                </td>
+            </xpath>
+
+
             <xpath expr="/t/t/div" position="after">
                 <div class="page" name="testing" style="page-break-before: always;">
                     <span>
