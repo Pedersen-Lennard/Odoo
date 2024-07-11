@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+import re
 
 
 class CustomPurchaseQuotation(models.Model):
@@ -22,6 +23,25 @@ class CustomSaleQuotation(models.Model):
 
     # product_id = fields.Many2one('product.product', string='Product')
     x_default_code = fields.Char(string="Item Code", compute='_compute_default_code', store="True")
+    display_product_name = fields.Char(string="Product Name", compute='_compute_display_product_name', store="True")
+
+    @api.depends('product_id', 'product_template_id')
+    def _compute_display_product_name(self):
+        for line in self:
+            description_sale = line.product_template_id.description_sale or ''
+            product_variant = line.product_id.product_template_variant_value_ids or ''
+            variants = []
+            if description_sale == False or description_sale == '':
+                line.display_product_name = line.product_template_id.name
+            else:
+                if product_variant:
+                    for value in product_variant:
+                        variants.append(value.name)
+                    string_variants = ', '.join(variants)
+                if len(variants) > 0:
+                    line.display_product_name = f"{description_sale} ({string_variants})"
+                else:
+                    line.display_product_name = description_sale
 
     @api.depends('product_template_id.default_code')
     def _compute_default_code(self):
@@ -49,6 +69,3 @@ class CustomInvoice(models.Model):
                 record.x_default_code = record.product_id.default_code
             else:
                 record.x_default_code = False
-
-
-
