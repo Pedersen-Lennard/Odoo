@@ -1,195 +1,683 @@
 <?xml version="1.0"?>
 <odoo>
     <data>
-<!--        <template id="customisation_purchase_order_form" inherit_id="purchase.purchase_order_form">-->
-<!--            <xpath expr="//field[@name='sequence']" position="after">-->
-<!--                <field name="default_code"/>-->
-<!--            </xpath>-->
-<!--            <xpath expr="/form/sheet/notebook/page/field[2]/form/group/group/field[8]" position="after">-->
-<!--                <field name="x_default_code"/>-->
-<!--            </xpath>-->
-<!--        </template>-->
+        <!--        <template id="customisation_purchase_order_form" inherit_id="purchase.purchase_order_form">-->
+        <!--            <xpath expr="//field[@name='sequence']" position="after">-->
+        <!--                <field name="default_code"/>-->
+        <!--            </xpath>-->
+        <!--            <xpath expr="/form/sheet/notebook/page/field[2]/form/group/group/field[8]" position="after">-->
+        <!--                <field name="x_default_code"/>-->
+        <!--            </xpath>-->
+        <!--        </template>-->
+        <template id="customisation_request_quotation" inherit_id="purchase.report_purchasequotation_document">
+            <xpath expr="/t" position="replace">
+                <t t-name="purchase.report_purchasequotation_document">
+                    <t t-call="web.external_layout">
+                        <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
+                        <t t-set="forced_vat"
+                           t-value="o.fiscal_position_id.foreign_vat"/> <!-- So that it appears in the footer of the report instead of the company VAT if it's set -->
+                        <t t-set="address">
+                            <strong>Vendor Details:</strong>
+                            <div t-field="o.partner_id"
+                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;, &quot;vat&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
+                        </t>
+                        <t t-if="o.dest_address_id">
+                            <t t-set="information_block">
+                                <strong>Shipping address:</strong>
+                                <div t-field="o.dest_address_id"
+                                     t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"
+                                     name="purchase_shipping_address"/>
+                            </t>
+                        </t>
+                        <t t-set="order_detail_block">
+                            <div id="informations" class="mt-4 mb32">
+                                <div t-if="o.user_id">
+                                    <strong>Buyer:</strong>
+                                    <p t-field="o.user_id" class="m-0"/>
+                                </div>
+                                <div t-if="o.partner_id">
+                                    <strong>Vendor:</strong>
+                                    <p t-field="o.partner_id" class="m-0"/>
+                                </div>
+                                <div t-if="o.partner_ref">
+                                    <strong>Vendor Reference:</strong>
+                                    <p t-field="o.partner_ref" class="m-0"/>
+                                </div>
+                            </div>
+                        </t>
+                        <div class="page">
+                            <div class="oe_structure"/>
+
+                            <h2 class="mt-4">Request for Quotation #
+                                <span t-field="o.name"/>
+                            </h2>
+
+
+                            <table class="table table-sm o_main_table table-borderless mt-4">
+                                <thead style="display: table-row-group">
+                                    <tr>
+                                        <th name="th_description">
+                                            <strong>Description</strong>
+                                        </th>
+                                        <th name="th_expected_date" class="text-center">
+                                            <strong>Expected Date</strong>
+                                        </th>
+                                        <th name="th_quantity" class="text-end">
+                                            <strong>Quantity</strong>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.order_line" t-as="order_line">
+                                        <tr>
+                                            <t t-if="not order_line.display_type">
+                                                <td id="product" class="text-center">
+                                                    <span t-field="order_line.product_id"/>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span t-field="order_line.date_planned"/>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-field="order_line.product_qty"/>
+                                                    <span t-field="order_line.product_uom" groups="uom.group_uom"/>
+                                                    <span t-if="order_line.product_packaging_id">
+                                                        (
+                                                        <span t-field="order_line.product_packaging_qty"
+                                                              t-options="{&quot;widget&quot;: &quot;integer&quot;}"/>
+                                                        <span t-field="order_line.product_packaging_id"/>)
+                                                    </span>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td colspan="99" id="section">
+                                                    <span t-field="order_line.name"/>
+                                                </td>
+                                            </t>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <p t-field="o.notes" class="mt-4"/>
+
+                            <div class="oe_structure"/>
+                        </div>
+                        <div class="page" name="testing" style="page-break-before: always;">
+                            <span>
+                                <strong>PAYMENT TERMS:</strong>
+                                A 50% deposit is required to put orders into production. Balance payment in full is
+                                required
+                                prior to dispatch of order
+                            </span>
+                            <div/>
+                            <br/>
+                            <span>Please use the correct quote or invoice number as the payment Reference Number so that
+                                we can
+                                allocate your payment to the correct order.
+                            </span>
+                            <div/>
+                            <span>Please send proof of payment to <a href="mailto:admin@pedersenlennard.co.za">
+                                admin@pedersenlennard.co.za
+                            </a> .
+                            </span>
+                            <div/>
+                            <br/>
+                            <span>
+                                <strong>BANK DETAILS:</strong>
+                            </span>
+                            <span style="color: red;">Capitec Business / Acc: 1050 677838 / Branch No: 450105 / Swift
+                                Code:
+                                CABLZAJJ / Reference:
+                                Quote or Invoice number
+                            </span>
+                            <div/>
+                            <br/>
+                            <span><strong>LEAD TIME:</strong>Kindly note our current lead times:
+                            </span>
+                            <div/>
+                            <span>- Homeware and accessories: 5 weeks.</span>
+                            <div/>
+                            <span>- Furniture items: 6 weeks</span>
+                            <div/>
+                            <span>A delivery date will be confirmed closer to completion.</span>
+                            <div/>
+                            <br/>
+                            <span>TERMS AND CONDITIONS:</span>
+                            <div/>
+                            <span>The purchase of the product/s from Pedersen + Lennard is subject to the terms and
+                                conditions
+                                of sale as contained on the website, http://pedersenlennard.co.za/about/faqs/.
+                                A copy can also be requested by you in-store or on email and will be provided upon such
+                                express
+                                request. By purchasing this product/s you confirm your unconditional
+                                acceptance of the terms and conditions of sale.
+                            </span>
+                            <div/>
+                            <br/>
+                            <span>IMPORTANT TO NOTE:</span>
+                            <div/>
+                            <span>Timber is a natural product and is affected by change in humidity – if not properly
+                                cared for
+                                may lead to cracking or warping. Please take note of our care instructions and
+                                action accordingly, as failure to do so may void warranty. If unsure, please contact us
+                                and
+                                we’ll gladly assist.
+                            </span>
+                        </div>
+                    </t>
+                </t>
+            </xpath>
+        </template>
 
         <template id="customisation_purchase_order" inherit_id="purchase.report_purchaseorder_document">
-            <xpath expr="/t/t/div/table/thead/tr/th[2]" position="replace">
-                <th name="th_taxes">
-                    <strong>VAT</strong>
-                </th>
-            </xpath>
+            <xpath expr="/t" position="replace">
+                <t t-name="purchase.report_purchaseorder_document">
+                    <t t-call="web.external_layout">
+                        <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
+                        <t t-set="address">
+                            <strong>Vendor Details:</strong>
+                            <div t-field="o.partner_id"
+                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;, &quot;vat&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
+                        </t>
+                        <t t-if="o.dest_address_id">
+                            <t t-set="information_block">
+                                <strong>Shipping address:</strong>
+                                <div t-if="o.dest_address_id">
+                                    <div t-field="o.dest_address_id"
+                                         t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"
+                                         name="purchase_shipping_address"/>
+                                </div>
 
-            <xpath expr="/t/t/div/table/thead/tr/th[1]" position="before">
-                <th name="th_reference">
-                    <strong>Item Code</strong>
-                </th>
-            </xpath>
+                            </t>
+                        </t>
 
-            <xpath expr="/t/t/div/table/thead/tr/th[4]" position="after">
-                <th name="th_discount">
-                    <strong>Disc %</strong>
-                </th>
-            </xpath>
+                        <t t-set="order_detail_block">
+                            <div id="informations" class="mt-4 mb32">
+                                <div t-if="o.user_id">
+                                    <strong>Buyer:</strong>
+                                    <p t-field="o.user_id" class="m-0"/>
+                                </div>
+                                <div t-if="o.partner_ref">
+                                    <strong>Your Order Reference:</strong>
+                                    <p t-field="o.partner_ref" class="m-0"/>
+                                </div>
+                                <div t-if="o.state in ['purchase','done'] and o.date_approve">
+                                    <strong>Order Date:</strong>
+                                    <p t-field="o.date_approve" class="m-0"/>
+                                </div>
+                                <div t-elif="o.date_order">
+                                    <strong>Order Deadline:</strong>
+                                    <p t-field="o.date_order" class="m-0"/>
+                                </div>
+                            </div>
+                        </t>
+                        <div class="page">
+                            <div class="oe_structure"/>
 
-            <xpath expr="/t/t/div/table/tbody/t[2]/tr/t/td[1]" position="before">
-                <td id="item-reference">
-                    <span t-field="line.default_code"/>
-                </td>
-            </xpath>
+                            <div class="mt-4">
+                                <h2 t-if="o.state in ['draft', 'sent', 'to approve']">Request for Quotation #
+                                    <span t-field="o.name"/>
+                                </h2>
+                                <h2 t-if="o.state in ['purchase', 'done']">Purchase Order #
+                                    <span t-field="o.name"/>
+                                </h2>
+                                <h2 t-if="o.state == 'cancel'">Cancelled Purchase Order #
+                                    <span t-field="o.name"/>
+                                </h2>
+                            </div>
 
-            <xpath expr="/t/t/div/table/tbody/t[2]/tr/t/td[5]" position="before">
-                <td id="item-discount">
-                    <span t-field="line.discount"/>
-                </td>
-            </xpath>
 
-            <xpath expr="/t/t/div" position="after">
-                <div class="page" name="testing" style="page-break-before: always;">
-                    <span>
-                        <strong>PAYMENT TERMS:</strong>
-                        A 50% deposit is required to put orders into production. Balance payment in full is required
-                        prior to dispatch of order
-                    </span>
-                    <div/>
-                    <br/>
-                    <span>Please use the correct quote or invoice number as the payment Reference Number so that we can
-                        allocate your payment to the correct order.
-                    </span>
-                    <div/>
-                    <span>Please send proof of payment to <a href="mailto:admin@pedersenlennard.co.za">
-                        admin@pedersenlennard.co.za
-                    </a> .
-                    </span>
-                    <div/>
-                    <br/>
-                    <span>
-                        <strong>BANK DETAILS:</strong>
-                    </span>
-                    <span style="color: red;">Capitec Business / Acc: 1050 677838 / Branch No: 450105 / Swift Code:
-                        CABLZAJJ / Reference:
-                        Quote or Invoice number
-                    </span>
-                    <div/>
-                    <br/>
-                    <span><strong>LEAD TIME:</strong>Kindly note our current lead times:
-                    </span>
-                    <div/>
-                    <span>- Homeware and accessories: 5 weeks.</span>
-                    <div/>
-                    <span>- Furniture items: 6 weeks</span>
-                    <div/>
-                    <span>A delivery date will be confirmed closer to completion.</span>
-                    <div/>
-                    <br/>
-                    <span>TERMS AND CONDITIONS:</span>
-                    <div/>
-                    <span>The purchase of the product/s from Pedersen + Lennard is subject to the terms and conditions
-                        of sale as contained on the website, http://pedersenlennard.co.za/about/faqs/.
-                        A copy can also be requested by you in-store or on email and will be provided upon such express
-                        request. By purchasing this product/s you confirm your unconditional
-                        acceptance of the terms and conditions of sale.
-                    </span>
-                    <div/>
-                    <br/>
-                    <span>IMPORTANT TO NOTE:</span>
-                    <div/>
-                    <span>Timber is a natural product and is affected by change in humidity – if not properly cared for
-                        may lead to cracking or warping. Please take note of our care instructions and
-                        action accordingly, as failure to do so may void warranty. If unsure, please contact us and
-                        we’ll gladly assist.
-                    </span>
-                </div>
+                            <table class="table table-sm o_main_table table-borderless mt-4">
+                                <thead style="display: table-row-group">
+                                    <tr>
+                                        <th name="th_description">
+                                            <strong>Description</strong>
+                                        </th>
+                                        <th name="th_quantity">
+                                            <strong>Quantity</strong>
+                                        </th>
+                                        <th name="th_price_unit" class="text-center">
+                                            <strong>Unit Price</strong>
+                                        </th>
+                                        <th name="th_discount" class="text-end">
+                                            <strong>Disc %</strong>
+                                        </th>
+                                        <th name="th_taxes" class="text-end">
+                                            <strong>VAT</strong>
+                                        </th>
+                                        <th name="th_subtotal" class="text-end">
+                                            <strong>Amount ZAR</strong>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="current_subtotal" t-value="0"/>
+                                    <t t-foreach="o.order_line" t-as="line">
+                                        <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/>
+
+                                        <tr t-att-class="'bg-200 fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''">
+                                            <t t-if="not line.display_type">
+                                                <td id="product">
+                                                    <span t-field="line.product_id"/>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-field="line.product_qty"/>
+                                                    <span t-field="line.product_uom.name" groups="uom.group_uom"/>
+                                                    <span t-if="line.product_packaging_id">
+                                                        (
+                                                        <span t-field="line.product_packaging_qty"
+                                                              t-options="{&quot;widget&quot;: &quot;integer&quot;}"/>
+                                                        <span t-field="line.product_packaging_id"/>)
+                                                    </span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-field="line.price_unit"/>
+                                                </td>
+                                                <td class="text-end" id="item-discount">
+                                                    <span t-field="line.discount"/>
+                                                </td>
+                                                <td class="text-end" name="td_taxes">
+                                                    <span t-esc="', '.join(map(lambda x: x.description or x.name, line.taxes_id))"/>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-field="line.price_subtotal"
+                                                          t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/>
+                                                </td>
+                                            </t>
+                                            <t t-if="line.display_type == 'line_section'">
+                                                <td colspan="99" id="section">
+                                                    <span t-field="line.name"/>
+                                                </td>
+                                                <t t-set="current_section" t-value="line"/>
+                                                <t t-set="current_subtotal" t-value="0"/>
+                                            </t>
+                                            <t t-if="line.display_type == 'line_note'">
+                                                <td colspan="99" id="note">
+                                                    <span t-field="line.name"/>
+                                                </td>
+                                            </t>
+                                        </tr>
+                                        <t t-if="current_section and (line_last or o.order_line[line_index+1].display_type == 'line_section')">
+                                            <tr class="is-subtotal text-end">
+                                                <td colspan="99" id="subtotal">
+                                                    <strong class="mr16">Subtotal</strong>
+                                                    <span t-esc="current_subtotal"
+                                                          t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <div id="total" class="row justify-content-end">
+                                <div class="col-4">
+                                    <table class="table table-sm table-borderless">
+                                        <t t-set="tax_totals" t-value="o.tax_totals"/>
+                                        <t t-call="purchase.document_tax_totals"/>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <p t-field="o.notes" class="mt-4"/>
+                            <div class="oe_structure"/>
+                        </div>
+
+                        <div class="page" name="testing" style="page-break-before: always;">
+                            <span>
+                                <strong>PAYMENT TERMS:</strong>
+                                A 50% deposit is required to put orders into production. Balance payment in full is
+                                required
+                                prior to dispatch of order
+                            </span>
+                            <div/>
+                            <br/>
+                            <span>Please use the correct quote or invoice number as the payment Reference Number so that
+                                we can
+                                allocate your payment to the correct order.
+                            </span>
+                            <div/>
+                            <span>Please send proof of payment to <a href="mailto:admin@pedersenlennard.co.za">
+                                admin@pedersenlennard.co.za
+                            </a> .
+                            </span>
+                            <div/>
+                            <br/>
+                            <span>
+                                <strong>BANK DETAILS:</strong>
+                            </span>
+                            <span style="color: red;">Capitec Business / Acc: 1050 677838 / Branch No: 450105 / Swift
+                                Code:
+                                CABLZAJJ / Reference:
+                                Quote or Invoice number
+                            </span>
+                            <div/>
+                            <br/>
+                            <span><strong>LEAD TIME:</strong>Kindly note our current lead times:
+                            </span>
+                            <div/>
+                            <span>- Homeware and accessories: 5 weeks.</span>
+                            <div/>
+                            <span>- Furniture items: 6 weeks</span>
+                            <div/>
+                            <span>A delivery date will be confirmed closer to completion.</span>
+                            <div/>
+                            <br/>
+                            <span>TERMS AND CONDITIONS:</span>
+                            <div/>
+                            <span>The purchase of the product/s from Pedersen + Lennard is subject to the terms and
+                                conditions
+                                of sale as contained on the website, http://pedersenlennard.co.za/about/faqs/.
+                                A copy can also be requested by you in-store or on email and will be provided upon such
+                                express
+                                request. By purchasing this product/s you confirm your unconditional
+                                acceptance of the terms and conditions of sale.
+                            </span>
+                            <div/>
+                            <br/>
+                            <span>IMPORTANT TO NOTE:</span>
+                            <div/>
+                            <span>Timber is a natural product and is affected by change in humidity – if not properly
+                                cared for
+                                may lead to cracking or warping. Please take note of our care instructions and
+                                action accordingly, as failure to do so may void warranty. If unsure, please contact us
+                                and
+                                we’ll gladly assist.
+                            </span>
+                        </div>
+                    </t>
+                </t>
+
+
             </xpath>
         </template>
 
         <template id="customisation_sales_order" inherit_id="sale.report_saleorder_document">
+            <xpath expr="/t" position="replace">
+                <t t-name="sale.report_saleorder_document">
+                    <t t-call="web.external_layout">
+                        <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang)"/>
+                        <t t-set="forced_vat"
+                           t-value="doc.fiscal_position_id.foreign_vat"/> <!-- So that it appears in the footer of the report instead of the company VAT if it's set -->
+                        <t t-set="address">
+                            <strong>Customer Details:</strong>
+                            <div t-field="doc.partner_id"
+                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/>
+                            <p t-if="doc.partner_id.vat">
+                                <t t-if="doc.company_id.account_fiscal_country_id.vat_label"
+                                   t-out="doc.company_id.account_fiscal_country_id.vat_label"/>
+                                <t t-else="">Tax ID</t>:
+                                <span t-field="doc.partner_id.vat"/>
+                            </p>
+                        </t>
+                        <t t-if="doc.partner_shipping_id == doc.partner_invoice_id                              and doc.partner_invoice_id != doc.partner_id                              or doc.partner_shipping_id != doc.partner_invoice_id">
+                            <t t-set="information_block">
+                                <strong>
+                                    <t t-if="doc.partner_shipping_id == doc.partner_invoice_id">
+                                        Invoicing and Shipping Address:
+                                    </t>
+                                    <t t-else="">
+                                        Invoicing Address:
+                                    </t>
+                                </strong>
+                                <div t-field="doc.partner_invoice_id"
+                                     t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
+                                <t t-if="doc.partner_shipping_id != doc.partner_invoice_id">
+                                    <strong>Shipping Address:</strong>
+                                    <div t-field="doc.partner_shipping_id"
+                                         t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
+                                </t>
+                            </t>
+                        </t>
 
-            <xpath expr="/t/t/div/h2/span[2]" position="replace">
-                <span t-elif="doc.state in ['draft','sent']">Sale Quotation #</span>
-            </xpath>
+                        <t t-set="order_detail_block">
+                            <div class="mt-4 mb-2" id="informations">
+                                <div t-if="doc.client_order_ref" name="informations_reference">
+                                    <strong>Your Reference:</strong>
+                                    <br/>
+                                    <span class="m-0" t-field="doc.client_order_ref">SO0000</span>
+                                </div>
+                                <div t-if="doc.date_order" name="informations_date">
+                                    <strong t-if="doc.state in ['draft', 'sent']">Quotation Date:</strong>
+                                    <strong t-else="">Order Date:</strong>
+                                    <br/>
+                                    <span class="m-0" t-field="doc.date_order"
+                                          t-options="{&quot;widget&quot;: &quot;date&quot;}">2023-12-31
+                                    </span>
+                                </div>
+                                <div t-if="doc.validity_date and doc.state in ['draft', 'sent']" name="expiration_date">
+                                    <strong>Expiration:</strong>
+                                    <br/>
+                                    <span class="m-0" t-field="doc.validity_date">2023-12-31</span>
+                                </div>
+                                <div t-if="doc.user_id.name">
+                                    <strong>Salesperson:</strong>
+                                    <br/>
+                                    <span class="m-0" t-field="doc.user_id">Mitchell Admin</span>
+                                </div>
+                            </div>
+                        </t>
+                        <div class="page">
+                            <div class="oe_structure"/>
 
-            <xpath expr="/t/t/div/h2/span[3]" position="replace">
-                <span t-else="">Sale Order #</span>
-            </xpath>
+                            <h2 class="mt-4">
+                                <span t-if="env.context.get('proforma', False) or is_pro_forma">Pro-Forma Invoice #
+                                </span>
+                                <span t-elif="doc.state in ['draft','sent']">Sale Quotation #</span>
+                                <span t-else="">Sale Order #</span>
+                                <span t-field="doc.name">SO0000</span>
+                            </h2>
 
-            <xpath expr="/t/t/div/table/thead/tr/th[5]" position="replace">
-                <th name="th_taxes" class="text-end">VAT</th>
-            </xpath>
+                            <!-- Is there a discount on at least one line? -->
+                            <t t-set="lines_to_report" t-value="doc._get_order_lines_to_report()"/>
+                            <t t-set="display_discount" t-value="any(l.discount for l in lines_to_report)"/>
 
-            <xpath expr="/t/t/div/table/thead/tr/th[1]" position="before">
-                <th name="th_code" class="text-start">
-                    <strong>Item Code</strong>
-                </th>
-            </xpath>
+                            <div class="oe_structure"/>
+                            <table class="table table-sm o_main_table table-borderless mt-4">
+                                <!-- In case we want to repeat the header, remove "display: table-row-group" -->
+                                <thead style="display: table-row-group">
+                                    <tr>
+                                        <th name="th_code" class="text-start">Item Code</th>
+                                        <th name="th_description" class="text-start">Description</th>
+                                        <th name="th_quantity" class="text-end">Quantity</th>
+                                        <th name="th_priceunit" class="text-end">Unit Price</th>
+                                        <th name="th_discount" t-if="display_discount" class="text-end">
+                                            <span>Disc.%</span>
+                                        </th>
 
-            <xpath expr="//td[@name='td_name']" position="before">
-                <td name="item_reference">
-                    <span t-if="line.x_default_code" t-field="line.x_default_code">Extra Large</span>
-                </td>
-            </xpath>
+                                        <th name="th_taxes" class="text-end">VAT</th>
+                                        <th name="th_subtotal" class="text-end">
+                                            <span>Amount ZAR</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="sale_tbody">
 
+                                    <t t-set="current_subtotal" t-value="0"/>
 
-            <xpath expr="//td[@name='td_name']" position="replace">
-                <td name="td_name">
-                    <span t-if="line.product_id" t-field="line.product_id">Extra Large</span>
-                </td>
-            </xpath>
+                                    <t t-foreach="lines_to_report" t-as="line">
 
+                                        <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/>
 
-            <xpath expr="/t/t/div" position="after">
-                <div class="page" name="testing" style="page-break-before: always;">
-                    <span>
-                        <strong>PAYMENT TERMS:</strong>
-                        A 50% deposit is required to put orders into production. Balance payment in full is required
-                        prior to dispatch of order
-                    </span>
-                    <div/>
-                    <br/>
-                    <span>Please use the correct quote or invoice number as the payment Reference Number so that we can
-                        allocate your payment to the correct order.
-                    </span>
-                    <div/>
-                    <span>Please send proof of payment to <a href="mailto:admin@pedersenlennard.co.za">
-                        admin@pedersenlennard.co.za
-                    </a> .
-                    </span>
-                    <div/>
-                    <br/>
-                    <span>
-                        <strong>BANK DETAILS:</strong>
-                    </span>
-                    <span style="color: red;">Capitec Business / Acc: 1050 677838 / Branch No: 450105 / Swift Code:
-                        CABLZAJJ / Reference:
-                        Quote or Invoice number
-                    </span>
-                    <div/>
-                    <br/>
-                    <span><strong>LEAD TIME:</strong>Kindly note our current lead times:
-                    </span>
-                    <div/>
-                    <span>- Homeware and accessories: 5 weeks.</span>
-                    <div/>
-                    <span>- Furniture items: 6 weeks</span>
-                    <div/>
-                    <span>A delivery date will be confirmed closer to completion.</span>
-                    <div/>
-                    <br/>
-                    <span>TERMS AND CONDITIONS:</span>
-                    <div/>
-                    <span>The purchase of the product/s from Pedersen + Lennard is subject to the terms and conditions
-                        of sale as contained on the website, http://pedersenlennard.co.za/about/faqs/.
-                        A copy can also be requested by you in-store or on email and will be provided upon such express
-                        request. By purchasing this product/s you confirm your unconditional
-                        acceptance of the terms and conditions of sale.
-                    </span>
-                    <div/>
-                    <br/>
-                    <span>IMPORTANT TO NOTE:</span>
-                    <div/>
-                    <span>Timber is a natural product and is affected by change in humidity – if not properly cared for
-                        may lead to cracking or warping. Please take note of our care instructions and
-                        action accordingly, as failure to do so may void warranty. If unsure, please contact us and
-                        we’ll gladly assist.
-                    </span>
-                </div>
+                                        <tr t-att-class="'bg-200 fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''">
+
+                                            <t t-if="not line.display_type">
+                                                <td name="item_reference">
+                                                    <span t-if="line.x_default_code" t-field="line.x_default_code">Extra
+                                                        Large
+                                                    </span>
+                                                </td>
+                                                <td name="td_name">
+                                                    <span t-field="line.display_product_name">3</span>
+                                                </td>
+                                                <td name="td_quantity" class="text-end">
+                                                    <span t-field="line.product_uom_qty">3</span>
+                                                    <span t-field="line.product_uom">units</span>
+                                                    <span t-if="line.product_packaging_id">
+                                                        (
+                                                        <span t-field="line.product_packaging_qty"
+                                                              t-options="{&quot;widget&quot;: &quot;integer&quot;}"/>
+                                                        <span t-field="line.product_packaging_id"/>)
+                                                    </span>
+                                                </td>
+                                                <td name="td_priceunit" class="text-end">
+                                                    <span t-field="line.price_unit">3</span>
+                                                </td>
+                                                <td t-if="display_discount" class="text-end">
+                                                    <span t-field="line.discount">-</span>
+                                                </td>
+                                                <t t-set="taxes"
+                                                   t-value="', '.join([(tax.invoice_label or tax.name) for tax in line.tax_id])"/>
+                                                <td name="td_taxes"
+                                                    t-attf-class="text-end {{ 'text-nowrap' if len(taxes) &lt; 10 else '' }}">
+                                                    <span t-out="taxes">Tax 15%</span>
+                                                </td>
+                                                <td t-if="not line.is_downpayment" name="td_subtotal"
+                                                    class="text-end o_price_total">
+                                                    <span t-field="line.price_subtotal">27.00</span>
+                                                </td>
+                                            </t>
+                                            <t t-elif="line.display_type == 'line_section'">
+                                                <td name="td_section_line" colspan="99">
+                                                    <span t-field="line.name">A section title</span>
+                                                </td>
+                                                <t t-set="current_section" t-value="line"/>
+                                                <t t-set="current_subtotal" t-value="0"/>
+                                            </t>
+                                            <t t-elif="line.display_type == 'line_note'">
+                                                <td name="td_note_line" colspan="99">
+                                                    <span t-field="line.name">A note, whose content usually applies to
+                                                        the
+                                                        section or product above.
+                                                    </span>
+                                                </td>
+                                            </t>
+                                        </tr>
+
+                                        <t t-if="current_section and (line_last or lines_to_report[line_index+1].display_type == 'line_section') and not line.is_downpayment">
+                                            <tr class="is-subtotal text-end">
+                                                <td name="td_section_subtotal" colspan="99">
+                                                    <strong class="mr16">Subtotal</strong>
+                                                    <span t-out="current_subtotal"
+                                                          t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: doc.currency_id}">
+                                                        31.05
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                </tbody>
+                            </table>
+                            <div class="clearfix" name="so_total_summary">
+                                <div id="total" class="row" name="total">
+                                    <div t-attf-class="#{'col-6' if report_type != 'html' else 'col-sm-7 col-md-6'} ms-auto">
+                                        <table class="table table-sm table-borderless">
+                                            <!-- Tax totals -->
+                                            <t t-set="tax_totals" t-value="doc.tax_totals"/>
+                                            <t t-call="sale.document_tax_totals"/>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="oe_structure"/>
+
+                            <div t-if="not doc.signature" class="oe_structure"/>
+                            <div t-else="" class="mt-4 ml64 mr4" name="signature">
+                                <div class="offset-8">
+                                    <strong>Signature</strong>
+                                </div>
+                                <div class="offset-8">
+                                    <img t-att-src="image_data_uri(doc.signature)"
+                                         style="max-height: 4cm; max-width: 8cm;"/>
+                                </div>
+                                <div class="offset-8 text-center">
+                                    <span t-field="doc.signed_by">Oscar Morgan</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span t-field="doc.note"
+                                      t-attf-style="#{'text-align:justify;text-justify:inter-word;' if doc.company_id.terms_type != 'html' else ''}"
+                                      name="order_note"/>
+                                <p t-if="not is_html_empty(doc.payment_term_id.note)">
+                                    <span t-field="doc.payment_term_id.note">The payment should also be transmitted with
+                                        love
+                                    </span>
+                                </p>
+                                <p t-if="doc.fiscal_position_id and not is_html_empty(doc.fiscal_position_id.sudo().note)"
+                                   id="fiscal_position_remark">
+                                    <strong>Fiscal Position Remark:</strong>
+                                    <span t-field="doc.fiscal_position_id.sudo().note">No further requirements for this
+                                        payment
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="page" name="testing" style="page-break-before: always;">
+                            <span>
+                                <strong>PAYMENT TERMS:</strong>
+                                A 50% deposit is required to put orders into production. Balance payment in full is
+                                required
+                                prior to dispatch of order
+                            </span>
+                            <div/>
+                            <br/>
+                            <span>Please use the correct quote or invoice number as the payment Reference Number so that
+                                we
+                                can
+                                allocate your payment to the correct order.
+                            </span>
+                            <div/>
+                            <span>Please send proof of payment to <a href="mailto:admin@pedersenlennard.co.za">
+                                admin@pedersenlennard.co.za
+                            </a> .
+                            </span>
+                            <div/>
+                            <br/>
+                            <span>
+                                <strong>BANK DETAILS:</strong>
+                            </span>
+                            <span style="color: red;">Capitec Business / Acc: 1050 677838 / Branch No: 450105 / Swift
+                                Code:
+                                CABLZAJJ / Reference:
+                                Quote or Invoice number
+                            </span>
+                            <div/>
+                            <br/>
+                            <span><strong>LEAD TIME:</strong>Kindly note our current lead times:
+                            </span>
+                            <div/>
+                            <span>- Homeware and accessories: 5 weeks.</span>
+                            <div/>
+                            <span>- Furniture items: 6 weeks</span>
+                            <div/>
+                            <span>A delivery date will be confirmed closer to completion.</span>
+                            <div/>
+                            <br/>
+                            <span>TERMS AND CONDITIONS:</span>
+                            <div/>
+                            <span>The purchase of the product/s from Pedersen + Lennard is subject to the terms and
+                                conditions
+                                of sale as contained on the website, http://pedersenlennard.co.za/about/faqs/.
+                                A copy can also be requested by you in-store or on email and will be provided upon such
+                                express
+                                request. By purchasing this product/s you confirm your unconditional
+                                acceptance of the terms and conditions of sale.
+                            </span>
+                            <div/>
+                            <br/>
+                            <span>IMPORTANT TO NOTE:</span>
+                            <div/>
+                            <span>Timber is a natural product and is affected by change in humidity – if not properly
+                                cared
+                                for
+                                may lead to cracking or warping. Please take note of our care instructions and
+                                action accordingly, as failure to do so may void warranty. If unsure, please contact us
+                                and
+                                we’ll gladly assist.
+                            </span>
+                        </div>
+                    </t>
+                </t>
             </xpath>
         </template>
     </data>

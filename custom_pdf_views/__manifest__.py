@@ -6,6 +6,7 @@
     'summary': 'These are custom views for the pdf invoices and quotations',
     'depends': ['base', 'account', 'sale', 'product', 'purchase', 'stock'],
     'data': [
+        'views/custom_address_template.xml',
         'views/custom_invoice.xml',
         'views/custom_quotations.xml',
         'views/custom_template.xml',
