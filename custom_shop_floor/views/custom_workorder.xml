@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="custom_mrp_workorder" model="ir.ui.view">
+        <field name="model">mrp.workorder</field>
+        <field name="priority">3</field>
+        <field name="inherit_id" ref="mrp.mrp_production_workorder_form_view_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='qty_production']" position="after">
+                <field name="x_studio_linked_sales"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
