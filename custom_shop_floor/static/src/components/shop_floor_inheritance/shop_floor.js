@@ -5,9 +5,15 @@ import { MrpDisplayAction } from "@mrp_workorder/mrp_display/mrp_display_action"
 
 patch(MrpDisplayAction.prototype, {
     get fieldsStructure() {
-        let res = super.fieldsStructure;
-        res['mrp.production'].push('x_studio_linked_sales');
-        console.log("test", res)
-        return res;
-    }
-})
+        const originalStructure = super.fieldsStructure;
+        const modifiedStructure = { ...originalStructure };
+
+        if (modifiedStructure["mrp.workorder"]) {
+            modifiedStructure["mrp.workorder"] = [
+                ...modifiedStructure["mrp.workorder"],
+                "x_studio_linked_sales"
+            ];
+        }
+        return modifiedStructure;
+    },
+});
