@@ -13,6 +13,5 @@
         ]
     },
     'data': [
-        'views/custom_workorder.xml',
     ],
 }

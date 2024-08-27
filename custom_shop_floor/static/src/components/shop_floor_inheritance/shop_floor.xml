@@ -3,8 +3,8 @@
     <t t-inherit="mrp_workorder.MrpDisplayRecord" t-inherit-mode="extension">
         <xpath expr="//div[hasclass('o_finished_product')]" position="before">
 <!--            <span class="text-truncate me-1" t-esc="record.x_record_production"/>-->
-<span t-if="record.x_studio_linked_sales">
-                SO - <span class="text-truncate me-1 mb-3" t-esc="record.x_studio_linked_sales"/>
+<span t-if="record.x_studio_linked_sales.name">
+                SO - <span class="text-truncate me-1 mb-3" t-esc="record.x_studio_linked_sales.name"/>
             </span>
         </xpath>
     </t>
