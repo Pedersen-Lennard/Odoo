@@ -7,13 +7,6 @@ class CustomPurchaseQuotation(models.Model):
 
     product_id = fields.Many2one('product.product', string='Product')
     default_code = fields.Char(string="Item Code", compute='_compute_default_code', store="True")
-    clean_name = fields.Char(string="Clean Product Name", compute='_compute_clean_name', store=True)
-
-    @api.depends('name')
-    def _compute_clean_name(self):
-        for line in self:
-            # Remove text within brackets and the brackets themselves
-            line.clean_name = re.sub(r'\[.*?\]', '', line.name)
 
     @api.depends('product_id.default_code')
     def _compute_default_code(self):

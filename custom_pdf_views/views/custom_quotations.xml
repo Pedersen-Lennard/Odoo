@@ -72,7 +72,7 @@
                                         <tr>
                                             <t t-if="not order_line.display_type">
                                                 <td id="product" class="text-center">
-                                                    <span t-esc="order_line.clean_name" />
+                                                    <span t-field="order_line.product_id"/>
                                                 </td>
                                                 <td class="text-center">
                                                     <span t-field="order_line.date_planned"/>
@@ -156,14 +156,12 @@
                             <br/>
                             <span>IMPORTANT TO NOTE:</span>
                             <div/>
-                            <span>Timber is a natural product and is affected by change in humidity, such as air-conditioning, and/or extreme
-                                temperatures which can cause timber to crack and cause damage that is out of our control.
-                                Please take note of our care instructions and action accordingly, as failure to do so may void warranty.
-                                When using air-conditioner, we encourage humidifiers as a preventative measure.
-                            </span>
-                            <div />
-                            <span>
-                                If unsure, please contact us and we’ll gladly assist.
+                            <span>Timber is a natural product and is affected by change in humidity – if not properly
+                                cared for
+                                may lead to cracking or warping. Please take note of our care instructions and
+                                action accordingly, as failure to do so may void warranty. If unsure, please contact us
+                                and
+                                we’ll gladly assist.
                             </span>
                         </div>
                     </t>
@@ -260,7 +258,7 @@
                                         <tr t-att-class="'bg-200 fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''">
                                             <t t-if="not line.display_type">
                                                 <td id="product">
-                                                    <span t-esc="line.clean_name" />
+                                                    <span t-field="line.product_id"/>
                                                 </td>
                                                 <td class="text-end">
                                                     <span t-field="line.product_qty"/>
@@ -379,14 +377,12 @@
                             <br/>
                             <span>IMPORTANT TO NOTE:</span>
                             <div/>
-                            <span>Timber is a natural product and is affected by change in humidity, such as air-conditioning, and/or extreme
-                                temperatures which can cause timber to crack and cause damage that is out of our control.
-                                Please take note of our care instructions and action accordingly, as failure to do so may void warranty.
-                                When using air-conditioner, we encourage humidifiers as a preventative measure.
-                            </span>
-                            <div />
-                            <span>
-                                If unsure, please contact us and we’ll gladly assist.
+                            <span>Timber is a natural product and is affected by change in humidity – if not properly
+                                cared for
+                                may lead to cracking or warping. Please take note of our care instructions and
+                                action accordingly, as failure to do so may void warranty. If unsure, please contact us
+                                and
+                                we’ll gladly assist.
                             </span>
                         </div>
                     </t>
@@ -671,14 +667,13 @@
                             <br/>
                             <span>IMPORTANT TO NOTE:</span>
                             <div/>
-                            <span>Timber is a natural product and is affected by change in humidity, such as air-conditioning, and/or extreme
-                                temperatures which can cause timber to crack and cause damage that is out of our control.
-                                Please take note of our care instructions and action accordingly, as failure to do so may void warranty.
-                                When using air-conditioner, we encourage humidifiers as a preventative measure.
-                            </span>
-                            <div />
-                            <span>
-                                If unsure, please contact us and we’ll gladly assist.
+                            <span>Timber is a natural product and is affected by change in humidity – if not properly
+                                cared
+                                for
+                                may lead to cracking or warping. Please take note of our care instructions and
+                                action accordingly, as failure to do so may void warranty. If unsure, please contact us
+                                and
+                                we’ll gladly assist.
                             </span>
                         </div>
                     </t>
