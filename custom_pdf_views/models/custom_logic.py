@@ -2,11 +2,6 @@ from odoo import models, fields, api
 import re
 
 
-class AccountMove(models.Model):
-    _inherit = 'account.move'
-
-
-
 class CustomPurchaseQuotation(models.Model):
     _inherit = 'purchase.order.line'
 
@@ -81,8 +76,3 @@ class CustomInvoice(models.Model):
                 record.x_default_code = record.product_id.default_code
             else:
                 record.x_default_code = False
-
-class SaleOrder(models.Model):
-    _inherit = 'sale.order'
-
-    partner_invoice_id = fields.One2many('sale.order', 'partner_invoice_id', string="Sale Orders")
