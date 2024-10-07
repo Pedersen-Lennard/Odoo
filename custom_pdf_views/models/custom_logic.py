@@ -82,14 +82,7 @@ class CustomInvoice(models.Model):
             else:
                 record.x_default_code = False
 
-class CustomInvoice(models.Model):
+class AccountMove(models.Model):
     _inherit = 'account.move'
 
-    partner_invoice_id = fields.Many2one('res.partner', string='Invoice Address', compute='_compute_partner_invoice_id')
-
-    @api.depends('partner_id')
-    def _compute_partner_invoice_id(self):
-        """ Compute the invoice partner based on the partner_id field """
-        for move in self:
-            # By default, set partner_id as partner_invoice_id
-            move.partner_invoice_id = move.partner_id
+    partner_invoice_id = fields.Many2one('res.partner', string="Invoice Address")
