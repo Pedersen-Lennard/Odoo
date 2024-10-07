@@ -68,8 +68,6 @@ class CustomInvoice(models.Model):
     # _name = "custom.invoice"
     _inherit = 'account.move.line'
 
-
-    partner_invoice_id = fields.Many2one('res.partner', string='Invoice Address')
     # product_id = fields.Many2one('product.product', string='Product', domain=[('purchase_ok', '=', True)], change_default=True, index='btree_not_null')
     product_id = fields.Many2one('product.product', string='Product')
     # product_template_id = fields.Many2one('product.template', string='Product')
@@ -83,3 +81,15 @@ class CustomInvoice(models.Model):
                 record.x_default_code = record.product_id.default_code
             else:
                 record.x_default_code = False
+
+class CustomInvoice(models.Model):
+    _inherit = 'account.move'
+
+    partner_invoice_id = fields.Many2one('res.partner', string='Invoice Address', compute='_compute_partner_invoice_id')
+
+    @api.depends('partner_id')
+    def _compute_partner_invoice_id(self):
+        """ Compute the invoice partner based on the partner_id field """
+        for move in self:
+            # By default, set partner_id as partner_invoice_id
+            move.partner_invoice_id = move.partner_id
