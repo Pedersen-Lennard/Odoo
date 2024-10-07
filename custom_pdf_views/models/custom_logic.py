@@ -76,3 +76,16 @@ class CustomInvoice(models.Model):
                 record.x_default_code = record.product_id.default_code
             else:
                 record.x_default_code = False
+
+
+class AccountMove(models.Model):
+    _inherit = 'account.move'
+
+    sale_order_id = fields.Many2one('sale.order', string="Sale Order", help="Related Sale Order")
+    
+    partner_invoice_id = fields.Many2one(
+        related='sale_order_id.partner_invoice_id', 
+        string='Invoice Address', 
+        store=True, 
+        readonly=True
+    )
