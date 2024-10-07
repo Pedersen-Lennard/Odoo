@@ -76,3 +76,22 @@ class CustomInvoice(models.Model):
                 record.x_default_code = record.product_id.default_code
             else:
                 record.x_default_code = False
+
+class AccountMove(models.Model):
+    _inherit = 'account.move'
+
+    x_partner_invoice_id = fields.Many2one(
+        comodel_name='res.partner',
+        string='Invoice Address',
+        compute='_compute_partner_invoice_id', store=True, readonly=False, precompute=True,
+        check_company=True,
+    )
+
+    @api.depends('partner_id')
+    def _compute_partner_invoice_id(self):
+        for move in self:
+            if move.is_invoice(include_receipts=True):
+                addr = move.partner_id.address_get(['invoice'])  # Get the invoice address
+                move.x_partner_invoice_id = addr and addr.get('invoice')  # Set the invoice address
+            else:
+                move.x_partner_invoice_id = False
