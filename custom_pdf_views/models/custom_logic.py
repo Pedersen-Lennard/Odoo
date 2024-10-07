@@ -2,11 +2,23 @@ from odoo import models, fields, api
 import re
 
 
+class AccountMove(models.Model):
+    _inherit = 'account.move'
+
+
+
 class CustomPurchaseQuotation(models.Model):
     _inherit = 'purchase.order.line'
 
     product_id = fields.Many2one('product.product', string='Product')
     default_code = fields.Char(string="Item Code", compute='_compute_default_code', store="True")
+    clean_name = fields.Char(string="Clean Product Name", compute='_compute_clean_name', store=True)
+
+    @api.depends('name')
+    def _compute_clean_name(self):
+        for line in self:
+            # Remove text within brackets and the brackets themselves
+            line.clean_name = re.sub(r'\[.*?\]', '', line.name)
 
     @api.depends('product_id.default_code')
     def _compute_default_code(self):
@@ -56,6 +68,8 @@ class CustomInvoice(models.Model):
     # _name = "custom.invoice"
     _inherit = 'account.move.line'
 
+
+    partner_invoice_id = fields.Many2one('res.partner', string='Invoice Address')
     # product_id = fields.Many2one('product.product', string='Product', domain=[('purchase_ok', '=', True)], change_default=True, index='btree_not_null')
     product_id = fields.Many2one('product.product', string='Product')
     # product_template_id = fields.Many2one('product.template', string='Product')
