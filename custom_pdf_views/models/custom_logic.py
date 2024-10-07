@@ -82,7 +82,7 @@ class CustomInvoice(models.Model):
             else:
                 record.x_default_code = False
 
-class AccountMove(models.Model):
-    _inherit = 'account.move'
+class SaleOrder(models.Model):
+    _inherit = 'sale.order'
 
-    partner_invoice_id = fields.Many2one('res.partner', string="Invoice Address")
+    partner_invoice_id = fields.One2many('sale.order', 'partner_invoice_id', string="Sale Orders")
