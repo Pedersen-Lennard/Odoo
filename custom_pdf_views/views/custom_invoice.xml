@@ -15,21 +15,21 @@
                                     <t t-set="information_block">
                                         <div groups="account.group_delivery_invoice_address"
                                              name="shipping_address_block">
-<!--                                            <strong>Shipping Address:</strong>-->
-<!--                                            <div t-field="o.partner_shipping_id"-->
-<!--                                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/>-->
+                                           <!-- <strong>Shipping Address:</strong>
+                                           <div t-field="o.partner_shipping_id"
+                                                t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/> -->
 
                                             <strong>
-                                                <t t-if="o.x_partner_invoice_id">
+                                                <t t-if="o.partner_id">
                                                     Invoicing Address:
                                                 </t>
                                             </strong>
-                                            <div t-field="o.x_partner_invoice_id"
+                                            <div t-field="o.partner_id"
                                                  t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
                                         </div>
                                     </t>
                                 </div>
-                                <div class="col-6" name="address_not_same_as_shipping">
+                                <!-- <div class="col-6" name="address_not_same_as_shipping">
                                     <t t-set="address">
                                         <strong>Customer Details:</strong>
                                         <address class="mb-0" t-field="o.partner_id"
@@ -42,7 +42,7 @@
                                             <span t-field="o.partner_id.vat"/>
                                         </div>
                                     </t>
-                                </div>
+                                </div> -->
                             <!-- </t> -->
                             <!-- <t t-elif="o.partner_shipping_id and (o.partner_shipping_id == o.partner_id)">
                                 <div class="offset-col-6 col-6" name="address_same_as_shipping">
