@@ -11,13 +11,13 @@
                            t-value="o.fiscal_position_id.foreign_vat"/> <!-- So that it appears in the footer of the report instead of the company VAT if it's set -->
                         <div class="row">
                             <!-- <t t-if="o.x_partner_invoice_id and (o.x_partner_invoice_id != o.partner_id)"> -->
-                                <div class="col-6">
+                                <!-- <div class="col-6">
                                     <t t-set="information_block">
                                         <div groups="account.group_delivery_invoice_address"
                                              name="shipping_address_block">
-                                           <!-- <strong>Shipping Address:</strong>
+                                           <strong>Shipping Address:</strong>
                                            <div t-field="o.partner_shipping_id"
-                                                t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/> -->
+                                                t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/>
 
                                             <strong>
                                                 <t t-if="o.partner_id">
@@ -28,12 +28,14 @@
                                                  t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
                                         </div>
                                     </t>
-                                </div>
-                                <!-- <div class="col-6" name="address_not_same_as_shipping">
+                                </div> -->
+                                <div class="col-6" name="address_not_same_as_shipping">
                                     <t t-set="address">
-                                        <strong>Customer Details:</strong>
+                                        <strong>Invoicing Address:</strong>
+                                        <!-- <address class="mb-0" t-field="o.partner_id"
+                                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/> -->
                                         <address class="mb-0" t-field="o.partner_id"
-                                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/>
+                                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
                                         <div t-if="o.partner_id.vat" id="partner_vat_address_not_same_as_shipping">
                                             <t t-if="o.company_id.account_fiscal_country_id.vat_label"
                                                t-out="o.company_id.account_fiscal_country_id.vat_label"
@@ -42,7 +44,7 @@
                                             <span t-field="o.partner_id.vat"/>
                                         </div>
                                     </t>
-                                </div> -->
+                                </div>
                             <!-- </t> -->
                             <!-- <t t-elif="o.partner_shipping_id and (o.partner_shipping_id == o.partner_id)">
                                 <div class="offset-col-6 col-6" name="address_same_as_shipping">
