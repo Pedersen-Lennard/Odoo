@@ -10,22 +10,32 @@
                         <t t-set="forced_vat"
                            t-value="o.fiscal_position_id.foreign_vat"/> <!-- So that it appears in the footer of the report instead of the company VAT if it's set -->
                         <div class="row">
-                            <t t-if="o.partner_shipping_id and (o.partner_shipping_id != o.partner_id)">
-                                <div class="col-6">
+                            <!-- <t t-if="o.x_partner_invoice_id and (o.x_partner_invoice_id != o.partner_id)"> -->
+                                <!-- <div class="col-6">
                                     <t t-set="information_block">
                                         <div groups="account.group_delivery_invoice_address"
                                              name="shipping_address_block">
-                                            <strong>Shipping Address:</strong>
-                                            <div t-field="o.partner_shipping_id"
-                                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/>
+                                           <strong>Shipping Address:</strong>
+                                           <div t-field="o.partner_shipping_id"
+                                                t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/>
+
+                                            <strong>
+                                                <t t-if="o.partner_id">
+                                                    Invoicing Address:
+                                                </t>
+                                            </strong>
+                                            <div t-field="o.partner_id"
+                                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
                                         </div>
                                     </t>
-                                </div>
+                                </div> -->
                                 <div class="col-6" name="address_not_same_as_shipping">
                                     <t t-set="address">
-                                        <strong>Customer Details:</strong>
+                                        <strong>Invoicing Address:</strong>
+                                        <!-- <address class="mb-0" t-field="o.partner_id"
+                                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/> -->
                                         <address class="mb-0" t-field="o.partner_id"
-                                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/>
+                                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
                                         <div t-if="o.partner_id.vat" id="partner_vat_address_not_same_as_shipping">
                                             <t t-if="o.company_id.account_fiscal_country_id.vat_label"
                                                t-out="o.company_id.account_fiscal_country_id.vat_label"
@@ -35,9 +45,8 @@
                                         </div>
                                     </t>
                                 </div>
-                            </t>
-
-                            <t t-elif="o.partner_shipping_id and (o.partner_shipping_id == o.partner_id)">
+                            <!-- </t> -->
+                            <!-- <t t-elif="o.partner_shipping_id and (o.partner_shipping_id == o.partner_id)">
                                 <div class="offset-col-6 col-6" name="address_same_as_shipping">
                                     <t t-set="address">
                                         <strong>Customer Details:</strong>
@@ -52,8 +61,8 @@
                                         </div>
                                     </t>
                                 </div>
-                            </t>
-                            <t t-else="">
+                            </t> -->
+                            <!-- <t t-else="">
                                 <div class="offset-col-6 col-6" name="no_shipping">
                                     <t t-set="address">
                                         <address class="mb-0" t-field="o.partner_id"
@@ -67,7 +76,7 @@
                                         </div>
                                     </t>
                                 </div>
-                            </t>
+                            </t> -->
                             <t t-set="order_detail_block">
                                 <div id="informations" class="mt-3 mb-1">
                                     <div
@@ -355,11 +364,11 @@
                                         </div>
                                         <t t-set="payment_term_details" t-value="o.payment_term_details"/>
                                         <div class="mb-3">
-<!--                                            <span id="payment_terms_note_id" t-if="o.invoice_payment_term_id.note"-->
-<!--                                                  t-field="o.invoice_payment_term_id.note" name="payment_term">Payment-->
-<!--                                                within 30 calendar day-->
-<!--                                            </span>-->
-<!--                                            <br/>-->
+                                            <!--                                            <span id="payment_terms_note_id" t-if="o.invoice_payment_term_id.note"-->
+                                            <!--                                                  t-field="o.invoice_payment_term_id.note" name="payment_term">Payment-->
+                                            <!--                                                within 30 calendar day-->
+                                            <!--                                            </span>-->
+                                            <!--                                            <br/>-->
                                             <t t-if="o.invoice_payment_term_id.display_on_invoice and payment_term_details">
                                                 <div t-if="o.show_payment_term_details"
                                                      id="total_payment_term_details_table" class="row">
@@ -493,13 +502,17 @@
                             <br/>
                             <span>IMPORTANT TO NOTE:</span>
                             <div/>
-                            <span>Timber is a natural product and is affected by change in humidity – if not properly
-                                cared
-                                for
-                                may lead to cracking or warping. Please take note of our care instructions and
-                                action accordingly, as failure to do so may void warranty. If unsure, please contact us
-                                and
-                                we’ll gladly assist.
+                            <span>Timber is a natural product and is affected by change in humidity, such as
+                                air-conditioning, and/or extreme
+                                temperatures which can cause timber to crack and cause damage that is out of our
+                                control.
+                                Please take note of our care instructions and action accordingly, as failure to do so
+                                may void warranty.
+                                When using air-conditioner, we encourage humidifiers as a preventative measure.
+                            </span>
+                            <div/>
+                            <span>
+                                If unsure, please contact us and we’ll gladly assist.
                             </span>
                         </div>
                     </t>
