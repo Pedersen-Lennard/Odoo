@@ -461,6 +461,16 @@
                                 </div>
                             </div>
                         </t>
+                        <div class="col-3 ml-auto text-right" style="position: absolute; top: 0; right: 0;">
+                                <p style="margin: 5px;">
+                                    <strong>Export Number:</strong>
+                                    21059961
+                                </p>
+                                <p style="margin: 5px;">
+                                    <strong>VAT Number:</strong>
+                                    4740260858
+                                </p>
+                            </div>
                         <div class="page">
                             <div class="oe_structure"/>
 
