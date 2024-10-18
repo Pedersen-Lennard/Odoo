@@ -78,7 +78,7 @@
                                                 <td id="product" class="text-center">
                                                     <span t-esc="order_line.name.split('[')[0] + order_line.name.split(']')[-1] if '[' in order_line.name and ']' in order_line.name else order_line.name"/>
                                                 </td>
-                                                <td class="text-end">
+                                                <td class="text-center">
                                                     <span t-field="order_line.vendor_code" />
                                                 </td>
                                                 <td class="text-center">
