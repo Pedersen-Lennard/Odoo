@@ -21,10 +21,6 @@
                                 <strong style="color: black;">Vendor Details:</strong>
                                 <p t-field="o.partner_id" class="m-0"/>
                             </div>
-                            <div t-if="o.partner_ref">
-                                <strong style="color: black;">Vendor Code:</strong>
-                                <p t-field="o.partner_ref" class="m-0"/>
-                            </div>
                         </t>
                         <t t-if="o.dest_address_id">
                             <t t-set="information_block">
@@ -64,6 +60,9 @@
                                         <th name="th_description">
                                             <strong>Description</strong>
                                         </th>
+                                        <th name="th_code">
+                                            <strong>Code</strong>
+                                        </th>
                                         <th name="th_expected_date" class="text-center">
                                             <strong>Expected Date</strong>
                                         </th>
@@ -78,6 +77,9 @@
                                             <t t-if="not order_line.display_type">
                                                 <td id="product" class="text-center">
                                                     <span t-esc="order_line.name.split('[')[0] + order_line.name.split(']')[-1] if '[' in order_line.name and ']' in order_line.name else order_line.name"/>
+                                                </td>
+                                                <td>
+                                                    <span t-field="order_line.vendor_code" />
                                                 </td>
                                                 <td class="text-center">
                                                     <span t-field="order_line.date_planned"/>
@@ -190,10 +192,6 @@
                                 <div t-field="o.partner_id"
                                      t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;, &quot;vat&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
                             </div>
-                            <div t-if="o.partner_ref" >
-                                <strong style="color: black;">Vendor Code:</strong>
-                                <p t-field="o.partner_ref"/>
-                            </div>
                         </t>
                         <t t-if="o.dest_address_id">
                             <t t-set="information_block">
@@ -249,6 +247,9 @@
                                         <th name="th_description">
                                             <strong>Description</strong>
                                         </th>
+                                        <th name="th_code">
+                                            <strong>Code</strong>
+                                        </th>
                                         <th name="th_quantity">
                                             <strong>Quantity</strong>
                                         </th>
@@ -275,6 +276,9 @@
                                             <t t-if="not line.display_type">
                                                 <td id="product">
                                                     <span t-esc="line.name.split('[')[0] + line.name.split(']')[-1] if '[' in line.name and ']' in line.name else line.name"/>
+                                                </td>
+                                                <td>
+                                                    <span t-field="line.vendor_code" />
                                                 </td>
                                                 <td class="text-end">
                                                     <span t-field="line.product_qty"/>
