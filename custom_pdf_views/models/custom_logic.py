@@ -8,6 +8,7 @@ class CustomPurchaseQuotation(models.Model):
     product_id = fields.Many2one('product.product', string='Product')
     default_code = fields.Char(string="Item Code", compute='_compute_default_code', store="True")
     clean_name = fields.Char(string="Clean Product Name", compute='_compute_clean_name', store=True)
+    vendor_code = fields.Char(string='Vendor Code', related='product_id.seller_ids.product_code', store=True)
 
     @api.depends('name')
     def _compute_clean_name(self):
@@ -76,22 +77,3 @@ class CustomInvoice(models.Model):
                 record.x_default_code = record.product_id.default_code
             else:
                 record.x_default_code = False
-
-class AccountMove(models.Model):
-    _inherit = 'account.move'
-
-    x_partner_invoice_id = fields.Many2one(
-        comodel_name='res.partner',
-        string='Invoice Address',
-        compute='_compute_partner_invoice_id', store=True, readonly=False, precompute=True,
-        check_company=True,
-    )
-
-    @api.depends('partner_id')
-    def _compute_partner_invoice_id(self):
-        for move in self:
-            if move.is_invoice(include_receipts=True):
-                addr = move.partner_id.address_get(['invoice'])  # Get the invoice address
-                move.x_partner_invoice_id = addr and addr.get('invoice')  # Set the invoice address
-            else:
-                move.x_partner_invoice_id = False

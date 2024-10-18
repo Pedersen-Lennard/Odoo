@@ -17,9 +17,10 @@
                         <t t-set="forced_vat"
                            t-value="o.fiscal_position_id.foreign_vat"/> <!-- So that it appears in the footer of the report instead of the company VAT if it's set -->
                         <t t-set="address">
-                            <strong>Vendor Details:</strong>
-                            <div t-field="o.partner_id"
-                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;, &quot;vat&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
+                            <div t-if="o.partner_id">
+                                <strong style="color: black;">Vendor Details:</strong>
+                                <p t-field="o.partner_id" class="m-0"/>
+                            </div>
                         </t>
                         <t t-if="o.dest_address_id">
                             <t t-set="information_block">
@@ -35,14 +36,14 @@
                                     <strong>Buyer:</strong>
                                     <p t-field="o.user_id" class="m-0"/>
                                 </div>
-                                <div t-if="o.partner_id">
-                                    <strong>Vendor:</strong>
-                                    <p t-field="o.partner_id" class="m-0"/>
-                                </div>
-                                <div t-if="o.partner_ref">
-                                    <strong>Vendor Reference:</strong>
-                                    <p t-field="o.partner_ref" class="m-0"/>
-                                </div>
+                                <!--                                <div t-if="o.partner_id">-->
+                                <!--                                    <strong>Vendor:</strong>-->
+                                <!--                                    <p t-field="o.partner_id" class="m-0"/>-->
+                                <!--                                </div>-->
+                                <!--                                <div t-if="o.partner_ref">-->
+                                <!--                                    <strong>Vendor Reference:</strong>-->
+                                <!--                                    <p t-field="o.partner_ref" class="m-0"/>-->
+                                <!--                                </div>-->
                             </div>
                         </t>
                         <div class="page">
@@ -59,6 +60,9 @@
                                         <th name="th_description">
                                             <strong>Description</strong>
                                         </th>
+                                        <th name="th_code">
+                                            <strong>Code</strong>
+                                        </th>
                                         <th name="th_expected_date" class="text-center">
                                             <strong>Expected Date</strong>
                                         </th>
@@ -72,7 +76,10 @@
                                         <tr>
                                             <t t-if="not order_line.display_type">
                                                 <td id="product" class="text-center">
-                                                    <span t-esc="order_line.name.split('[')[0] + order_line.name.split(']')[-1] if '[' in order_line.name and ']' in order_line.name else order_line.name" />
+                                                    <span t-esc="order_line.name.split('[')[0] + order_line.name.split(']')[-1] if '[' in order_line.name and ']' in order_line.name else order_line.name"/>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span t-field="order_line.vendor_code" />
                                                 </td>
                                                 <td class="text-center">
                                                     <span t-field="order_line.date_planned"/>
@@ -156,12 +163,15 @@
                             <br/>
                             <span>IMPORTANT TO NOTE:</span>
                             <div/>
-                            <span>Timber is a natural product and is affected by change in humidity, such as air-conditioning, and/or extreme
-                                temperatures which can cause timber to crack and cause damage that is out of our control.
-                                Please take note of our care instructions and action accordingly, as failure to do so may void warranty.
+                            <span>Timber is a natural product and is affected by change in humidity, such as
+                                air-conditioning, and/or extreme
+                                temperatures which can cause timber to crack and cause damage that is out of our
+                                control.
+                                Please take note of our care instructions and action accordingly, as failure to do so
+                                may void warranty.
                                 When using air-conditioner, we encourage humidifiers as a preventative measure.
                             </span>
-                            <div />
+                            <div/>
                             <span>
                                 If unsure, please contact us and we’ll gladly assist.
                             </span>
@@ -177,9 +187,11 @@
                     <t t-call="web.external_layout">
                         <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
                         <t t-set="address">
-                            <strong>Vendor Details:</strong>
-                            <div t-field="o.partner_id"
-                                 t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;, &quot;vat&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
+                            <div t-if="o.partner_id">
+                                <strong style="color: black;">Vendor Details:</strong>
+                                <div t-field="o.partner_id"
+                                     t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;, &quot;vat&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
+                            </div>
                         </t>
                         <t t-if="o.dest_address_id">
                             <t t-set="information_block">
@@ -199,10 +211,10 @@
                                     <strong>Buyer:</strong>
                                     <p t-field="o.user_id" class="m-0"/>
                                 </div>
-                                <div t-if="o.partner_ref">
-                                    <strong>Your Order Reference:</strong>
-                                    <p t-field="o.partner_ref" class="m-0"/>
-                                </div>
+                                <!--                                <div t-if="o.partner_ref">-->
+                                <!--                                    <strong>Your Order Reference:</strong>-->
+                                <!--                                    <p t-field="o.partner_ref" class="m-0"/>-->
+                                <!--                                </div>-->
                                 <div t-if="o.state in ['purchase','done'] and o.date_approve">
                                     <strong>Order Date:</strong>
                                     <p t-field="o.date_approve" class="m-0"/>
@@ -235,6 +247,9 @@
                                         <th name="th_description">
                                             <strong>Description</strong>
                                         </th>
+                                        <th name="th_code">
+                                            <strong>Code</strong>
+                                        </th>
                                         <th name="th_quantity">
                                             <strong>Quantity</strong>
                                         </th>
@@ -260,7 +275,10 @@
                                         <tr t-att-class="'bg-200 fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''">
                                             <t t-if="not line.display_type">
                                                 <td id="product">
-                                                    <span t-esc="line.name.split('[')[0] + line.name.split(']')[-1] if '[' in line.name and ']' in line.name else line.name" />
+                                                    <span t-esc="line.name.split('[')[0] + line.name.split(']')[-1] if '[' in line.name and ']' in line.name else line.name"/>
+                                                </td>                                                
+                                                <td class="text-end">
+                                                    <span t-field="line.vendor_code" />
                                                 </td>
                                                 <td class="text-end">
                                                     <span t-field="line.product_qty"/>
@@ -379,12 +397,15 @@
                             <br/>
                             <span>IMPORTANT TO NOTE:</span>
                             <div/>
-                            <span>Timber is a natural product and is affected by change in humidity, such as air-conditioning, and/or extreme
-                                temperatures which can cause timber to crack and cause damage that is out of our control.
-                                Please take note of our care instructions and action accordingly, as failure to do so may void warranty.
+                            <span>Timber is a natural product and is affected by change in humidity, such as
+                                air-conditioning, and/or extreme
+                                temperatures which can cause timber to crack and cause damage that is out of our
+                                control.
+                                Please take note of our care instructions and action accordingly, as failure to do so
+                                may void warranty.
                                 When using air-conditioner, we encourage humidifiers as a preventative measure.
                             </span>
-                            <div />
+                            <div/>
                             <span>
                                 If unsure, please contact us and we’ll gladly assist.
                             </span>
@@ -462,15 +483,15 @@
                             </div>
                         </t>
                         <div class="col-3 ml-auto text-right" style="position: absolute; top: 0; right: 0;">
-                                <p style="margin: 5px;">
-                                    <strong>Export Number:</strong>
-                                    21059961
-                                </p>
-                                <p style="margin: 5px;">
-                                    <strong>VAT Number:</strong>
-                                    4740260858
-                                </p>
-                            </div>
+                            <p style="margin: 5px;">
+                                <strong>Export Number:</strong>
+                                21059961
+                            </p>
+                            <p style="margin: 5px;">
+                                <strong>VAT Number:</strong>
+                                4740260858
+                            </p>
+                        </div>
                         <div class="page">
                             <div class="oe_structure"/>
 
@@ -681,12 +702,15 @@
                             <br/>
                             <span>IMPORTANT TO NOTE:</span>
                             <div/>
-                            <span>Timber is a natural product and is affected by change in humidity, such as air-conditioning, and/or extreme
-                                temperatures which can cause timber to crack and cause damage that is out of our control.
-                                Please take note of our care instructions and action accordingly, as failure to do so may void warranty.
+                            <span>Timber is a natural product and is affected by change in humidity, such as
+                                air-conditioning, and/or extreme
+                                temperatures which can cause timber to crack and cause damage that is out of our
+                                control.
+                                Please take note of our care instructions and action accordingly, as failure to do so
+                                may void warranty.
                                 When using air-conditioner, we encourage humidifiers as a preventative measure.
                             </span>
-                            <div />
+                            <div/>
                             <span>
                                 If unsure, please contact us and we’ll gladly assist.
                             </span>
